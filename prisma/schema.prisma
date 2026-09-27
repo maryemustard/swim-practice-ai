@@ -1,0 +1,95 @@
+// Swim Practice AI — data model
+// Every team-owned row hangs off Team so multi-team support later is additive.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  groups    Group[]
+  createdAt DateTime @default(now())
+}
+
+model Group {
+  id             String @id @default(cuid())
+  teamId         String
+  team           Team   @relation(fields: [teamId], references: [id])
+  name           String
+  ageRange       String?
+  targetStandard String? // e.g. "100 free pacing on 1:20 by March"
+
+  swimmers      Swimmer[]
+  styleExamples StyleExample[]
+  goalMeets     GoalMeet[]
+  drills        DrillEntry[]
+  practices     Practice[]
+
+  createdAt DateTime @default(now())
+}
+
+model Swimmer {
+  id      String @id @default(cuid())
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name    String
+  times   SwimTime[]
+
+  createdAt DateTime @default(now())
+}
+
+model SwimTime {
+  id         String   @id @default(cuid())
+  swimmerId  String
+  swimmer    Swimmer  @relation(fields: [swimmerId], references: [id], onDelete: Cascade)
+  event      String // e.g. "100 Free", "200 IM"
+  kind       String // "current" | "goal"
+  seconds    Float
+  recordedAt DateTime @default(now())
+}
+
+model StyleExample {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  title     String
+  content   String // the practice itself, as the coach wrote it
+  createdAt DateTime @default(now())
+}
+
+model GoalMeet {
+  id              String   @id @default(cuid())
+  groupId         String
+  group           Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name            String
+  date            DateTime
+  taperWeeks      Int      @default(2)
+  attendanceNotes String? // coach's own rule of thumb, e.g. "4x/week -> low 30s, 6x/week -> mid 20s"
+  createdAt       DateTime @default(now())
+}
+
+model DrillEntry {
+  id         String   @id @default(cuid())
+  groupId    String
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name       String
+  definition String
+  createdAt  DateTime @default(now())
+}
+
+model Practice {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  focus     String?
+  content   String // full generated practice, markdown
+  intervals String? // JSON: per-swimmer A/B/C intervals per set
+  source    String   @default("template") // "template" | "claude"
+  createdAt DateTime @default(now())
+}
