@@ -4,7 +4,7 @@ import Papa from "papaparse";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { computeIntervals, generatePractice } from "@/lib/generatePractice";
+import { generatePractice, resolvePractice } from "@/lib/generatePractice";
 
 type CsvRow = { name?: string; event?: string; kind?: string; seconds?: string };
 
@@ -109,15 +109,15 @@ export async function generatePracticeAction(formData: FormData) {
   });
 
   const practice = await generatePractice(group, focus);
-  const setsWithIntervals = computeIntervals(group, practice);
+  const resolved = resolvePractice(group, practice);
 
   const saved = await prisma.practice.create({
     data: {
       groupId,
       focus,
-      source: practice.source,
-      content: JSON.stringify(practice.sets),
-      intervals: JSON.stringify(setsWithIntervals),
+      source: resolved.source,
+      content: resolved.text,
+      intervals: JSON.stringify(resolved.paceSets),
     },
   });
 

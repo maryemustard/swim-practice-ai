@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatSeconds } from "@/lib/paceEngine";
-import type { PracticeSet, SetWithIntervals } from "@/lib/generatePractice";
+import type { ResolvedPaceSet } from "@/lib/generatePractice";
 
 export default async function PracticeDetailPage({
   params,
@@ -15,10 +15,7 @@ export default async function PracticeDetailPage({
   });
   if (!practice) notFound();
 
-  const sets: PracticeSet[] = JSON.parse(practice.content);
-  const setsWithIntervals: SetWithIntervals[] = practice.intervals
-    ? JSON.parse(practice.intervals)
-    : sets.map((s) => ({ ...s, intervals: [] }));
+  const paceSets: ResolvedPaceSet[] = practice.intervals ? JSON.parse(practice.intervals) : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -36,20 +33,16 @@ export default async function PracticeDetailPage({
         </Link>
       </div>
 
-      <div className="flex flex-col gap-4">
-        {setsWithIntervals.map((set, i) => (
-          <section key={i} className="rounded-lg border border-slate-200 bg-white p-5">
-            <div className="flex items-baseline justify-between">
-              <h2 className="font-medium">{set.label}</h2>
-              <span className="text-xs uppercase tracking-wide text-slate-500">{set.setType}</span>
-            </div>
-            <p className="text-sm text-slate-700 mt-1">
-              {set.reps} x {set.distance} {set.stroke}
-              {set.restSeconds ? ` on ${set.restSeconds}s rest` : ""}
-            </p>
-            {set.notes && <p className="text-sm text-slate-500 mt-1">{set.notes}</p>}
+      <section className="rounded-lg border border-slate-200 bg-white p-5">
+        <pre className="text-sm whitespace-pre-wrap font-mono text-slate-800">{practice.content}</pre>
+      </section>
 
-            {set.intervals.length > 0 && (
+      {paceSets.length > 0 && (
+        <section className="flex flex-col gap-4">
+          <h2 className="font-medium text-slate-700">Individual pace breakdown</h2>
+          {paceSets.map((set, i) => (
+            <div key={i} className="rounded-lg border border-slate-200 bg-white p-5">
+              <h3 className="font-medium text-sm">{set.label}</h3>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -84,13 +77,20 @@ export default async function PracticeDetailPage({
                           <td className="py-1 pr-4 text-slate-600">on {formatSeconds(iv.interval)}</td>
                         </tr>
                       ))}
+                    {set.intervals.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="py-2 text-slate-500">
+                          No swimmer times on file for this set.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
-            )}
-          </section>
-        ))}
-      </div>
+            </div>
+          ))}
+        </section>
+      )}
     </div>
   );
 }
