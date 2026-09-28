@@ -43,12 +43,16 @@ export default async function PracticeDetailPage({
           {paceSets.map((set, i) => (
             <div key={i} className="rounded-lg border border-slate-200 bg-white p-5">
               <h3 className="font-medium text-sm">{set.label}</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Reps scaled per group so the set takes about the same total time for everyone.
+              </p>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left text-slate-500 border-b border-slate-200">
                       <th className="py-1 pr-4">Swimmer</th>
                       <th className="py-1 pr-4">Group</th>
+                      <th className="py-1 pr-4">Reps</th>
                       <th className="py-1 pr-4">Target</th>
                       <th className="py-1 pr-4">Interval</th>
                     </tr>
@@ -73,13 +77,14 @@ export default async function PracticeDetailPage({
                               {iv.group}
                             </span>
                           </td>
+                          <td className="py-1 pr-4 text-slate-600">{set.groupReps[iv.group]}x</td>
                           <td className="py-1 pr-4 text-slate-600">{formatSeconds(iv.targetTime)}</td>
                           <td className="py-1 pr-4 text-slate-600">on {formatSeconds(iv.interval)}</td>
                         </tr>
                       ))}
                     {set.intervals.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="py-2 text-slate-500">
+                        <td colSpan={5} className="py-2 text-slate-500">
                           No swimmer times on file for this set.
                         </td>
                       </tr>

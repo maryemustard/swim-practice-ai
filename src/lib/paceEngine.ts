@@ -69,3 +69,41 @@ export function assignIntervalGroups(
     return { swimmerId: s.id, swimmerName: s.name, targetTime: s.targetTime, interval: s.interval, group };
   });
 }
+
+/**
+ * Same total set time across groups, not the same rep count: a slower
+ * group does fewer reps of the same distance rather than swimming the same
+ * count on a more generous interval. `referenceReps` is the rep count as
+ * written for the fastest (A) group; other groups' rep counts are scaled so
+ * reps * interval comes out to roughly the same total time as A's.
+ */
+export function repsPerGroup(
+  intervals: SwimmerInterval[],
+  referenceReps: number
+): Record<"A" | "B" | "C", number> {
+  const byGroup: Record<"A" | "B" | "C", number[]> = { A: [], B: [], C: [] };
+  for (const iv of intervals) byGroup[iv.group].push(iv.interval);
+
+  const median = (vals: number[]) => {
+    const sorted = [...vals].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+  };
+
+  const medians: Partial<Record<"A" | "B" | "C", number>> = {};
+  for (const g of ["A", "B", "C"] as const) {
+    if (byGroup[g].length > 0) medians[g] = median(byGroup[g]);
+  }
+
+  // Total time is anchored on A; if nobody's in A, fall back to whichever group has swimmers.
+  const anchorGroup = (["A", "B", "C"] as const).find((g) => medians[g] !== undefined);
+  const totalTime = anchorGroup ? referenceReps * medians[anchorGroup]! : 0;
+
+  const result: Record<"A" | "B" | "C", number> = { A: 0, B: 0, C: 0 };
+  for (const g of ["A", "B", "C"] as const) {
+    const m = medians[g];
+    if (m === undefined) continue;
+    result[g] = g === anchorGroup ? referenceReps : Math.max(1, Math.round(totalTime / m));
+  }
+  return result;
+}

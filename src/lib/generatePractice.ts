@@ -4,6 +4,7 @@ import {
   SwimmerInterval,
   assignIntervalGroups,
   formatSeconds,
+  repsPerGroup,
   targetInterval,
   targetTimeForRepeat,
 } from "./paceEngine";
@@ -15,6 +16,10 @@ export type PaceSetSpec = {
   label: string;
   distance: number; // yards per rep, used to compute each swimmer's target
   setType: SetType;
+  // Rep count as written in the text, for the fastest (A) group. Other
+  // groups do fewer reps of the same distance so the set takes about the
+  // same total time for everyone, rather than the same reps on more rest.
+  reps: number;
 };
 
 export type GeneratedPractice = {
@@ -37,7 +42,10 @@ export type GroupForGeneration = {
   }[];
 };
 
-export type ResolvedPaceSet = PaceSetSpec & { intervals: SwimmerInterval[] };
+export type ResolvedPaceSet = PaceSetSpec & {
+  intervals: SwimmerInterval[];
+  groupReps: Record<"A" | "B" | "C", number>;
+};
 
 export type ResolvedPractice = {
   focus: string;
@@ -85,7 +93,7 @@ Cooldown: 200 easy`;
   return {
     focus,
     text,
-    paceSets: [{ key: "main", label: `${reps}x${distance} ${stroke}`, distance, setType: mainType }],
+    paceSets: [{ key: "main", label: `${reps}x${distance} ${stroke}`, distance, setType: mainType, reps }],
     source: "template",
   };
 }
@@ -115,13 +123,15 @@ ${drillText || "(none provided yet)"}
 
 Some parts of a practice are swum together as a group (warmup, pre-set, usually cooldown, often kick/drill) — write those with a normal fixed interval, same as the coach would. But for each part where swimmers should hold their OWN personalized pace (a real main set), do NOT invent one interval for everyone — instead write a placeholder token in the text like [[PACE:main1]] where the interval would go, and describe that set in the accompanying JSON so we can compute each swimmer's real interval and substitute it in.
 
+For those personalized main sets, this team's coaches scale the WORK, not just the rest: a slower group does fewer reps of the same distance so the whole set takes about the same total time as the faster group, rather than everyone doing the same reps with slower swimmers just getting more rest. Write the rep count in the text as if for the fastest group, and report that same number as "reps" in the JSON — the actual per-group rep counts (fewer for slower groups, same total time) get computed and substituted in along with the pace.
+
 Respond in EXACTLY this format, nothing else:
 
 PRACTICE:
 <the full practice text, in the coach's own voice, with [[PACE:key]] placeholders for personalized sets>
 
 INTERVALS_JSON:
-<a JSON array, one entry per placeholder used above: {"key": string (matches a placeholder), "label": string (short description of the set), "distance": number (yards per single rep), "setType": one of "sprint"|"threshold"|"aerobic"|"im">}`;
+<a JSON array, one entry per placeholder used above: {"key": string (matches a placeholder), "label": string (short description of the set), "distance": number (yards per single rep), "setType": one of "sprint"|"threshold"|"aerobic"|"im", "reps": number (rep count as written, for the fastest group)}>`;
 
   const msg = await client.messages.create({
     model: "claude-sonnet-5",
@@ -174,7 +184,7 @@ export async function generatePractice(
   return claudeResult ?? templatePractice(focus);
 }
 
-function inlineSummary(intervals: SwimmerInterval[]): string {
+function inlineSummary(intervals: SwimmerInterval[], groupReps: Record<"A" | "B" | "C", number>): string {
   const groups: Record<"A" | "B" | "C", number[]> = { A: [], B: [], C: [] };
   for (const iv of intervals) groups[iv.group].push(iv.interval);
 
@@ -185,9 +195,9 @@ function inlineSummary(intervals: SwimmerInterval[]): string {
       const lo = Math.min(...vals);
       const hi = Math.max(...vals);
       const range = lo === hi ? formatSeconds(lo) : `${formatSeconds(lo)}-${formatSeconds(hi)}`;
-      return `${g}: on ${range}`;
+      return `${g}: ${groupReps[g]}x on ${range}`;
     });
-  return parts.length > 0 ? `(${parts.join(" · ")})` : "(no times on file)";
+  return parts.length > 0 ? `(${parts.join(" · ")}, same total time)` : "(no times on file)";
 }
 
 /**
@@ -211,10 +221,11 @@ export function resolvePractice(group: GroupForGeneration, practice: GeneratedPr
       .filter((x): x is NonNullable<typeof x> => x !== null);
 
     const intervals = assignIntervalGroups(swimmerTargets);
-    resolvedSets.push({ ...spec, intervals });
+    const groupReps = repsPerGroup(intervals, spec.reps);
+    resolvedSets.push({ ...spec, intervals, groupReps });
 
     const placeholder = `[[PACE:${spec.key}]]`;
-    text = text.split(placeholder).join(inlineSummary(intervals));
+    text = text.split(placeholder).join(inlineSummary(intervals, groupReps));
   }
 
   return { focus: practice.focus, text, paceSets: resolvedSets, source: practice.source };
