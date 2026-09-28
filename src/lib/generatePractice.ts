@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
+  GroupRepsResult,
+  IntervalGroup,
   SetType,
   SwimmerInterval,
   assignIntervalGroups,
@@ -44,7 +46,7 @@ export type GroupForGeneration = {
 
 export type ResolvedPaceSet = PaceSetSpec & {
   intervals: SwimmerInterval[];
-  groupReps: Record<"A" | "B" | "C", number>;
+  groupReps: Partial<Record<IntervalGroup, GroupRepsResult>>;
 };
 
 export type ResolvedPractice = {
@@ -184,20 +186,21 @@ export async function generatePractice(
   return claudeResult ?? templatePractice(focus);
 }
 
-function inlineSummary(intervals: SwimmerInterval[], groupReps: Record<"A" | "B" | "C", number>): string {
-  const groups: Record<"A" | "B" | "C", number[]> = { A: [], B: [], C: [] };
+function inlineSummary(intervals: SwimmerInterval[], groupReps: Partial<Record<IntervalGroup, GroupRepsResult>>): string {
+  const groups: Record<IntervalGroup, number[]> = { A: [], B: [] };
   for (const iv of intervals) groups[iv.group].push(iv.interval);
 
-  const parts = (["A", "B", "C"] as const)
-    .filter((g) => groups[g].length > 0)
+  const parts = (["A", "B"] as const)
+    .filter((g) => groups[g].length > 0 && groupReps[g])
     .map((g) => {
       const vals = groups[g];
       const lo = Math.min(...vals);
       const hi = Math.max(...vals);
       const range = lo === hi ? formatSeconds(lo) : `${formatSeconds(lo)}-${formatSeconds(hi)}`;
-      return `${g}: ${groupReps[g]}x on ${range}`;
+      const { reps, totalSeconds } = groupReps[g]!;
+      return `${g}: ${reps}x on ${range} (~${formatSeconds(totalSeconds)} total)`;
     });
-  return parts.length > 0 ? `(${parts.join(" · ")}, same total time)` : "(no times on file)";
+  return parts.length > 0 ? `(${parts.join(" · ")})` : "(no times on file)";
 }
 
 /**

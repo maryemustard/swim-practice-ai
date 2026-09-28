@@ -46,17 +46,19 @@ export function formatSeconds(totalSeconds: number): string {
   return m > 0 ? `${m}:${s.toString().padStart(2, "0")}` : `${s}"`;
 }
 
+export type IntervalGroup = "A" | "B";
+
 export type SwimmerInterval = {
   swimmerId: string;
   swimmerName: string;
   targetTime: number;
   interval: number;
-  group: "A" | "B" | "C";
+  group: IntervalGroup;
 };
 
 /**
- * Split swimmers into A/B/C lanes for one set, based on each swimmer's
- * computed target time (fastest third = A, middle third = B, rest = C).
+ * Split swimmers into A/B lanes for one set, based on each swimmer's
+ * computed target time (faster half = A, slower half = B).
  */
 export function assignIntervalGroups(
   swimmers: { id: string; name: string; targetTime: number; interval: number }[]
@@ -64,24 +66,30 @@ export function assignIntervalGroups(
   const sorted = [...swimmers].sort((a, b) => a.targetTime - b.targetTime);
   const n = sorted.length;
   return sorted.map((s, i) => {
-    const pct = n <= 1 ? 0 : i / (n - 1);
-    const group: "A" | "B" | "C" = pct < 1 / 3 ? "A" : pct < 2 / 3 ? "B" : "C";
+    const group: IntervalGroup = i < n / 2 ? "A" : "B";
     return { swimmerId: s.id, swimmerName: s.name, targetTime: s.targetTime, interval: s.interval, group };
   });
 }
+
+export type GroupRepsResult = {
+  reps: number;
+  totalSeconds: number; // reps * this group's representative interval — the ACTUAL total, not assumed equal
+};
 
 /**
  * Same total set time across groups, not the same rep count: a slower
  * group does fewer reps of the same distance rather than swimming the same
  * count on a more generous interval. `referenceReps` is the rep count as
  * written for the fastest (A) group; other groups' rep counts are scaled so
- * reps * interval comes out to roughly the same total time as A's.
+ * reps * interval comes out CLOSE to A's total time — integer rep counts
+ * mean it's an approximation, so callers should show each group's actual
+ * total (`totalSeconds`) rather than asserting they're identical.
  */
 export function repsPerGroup(
   intervals: SwimmerInterval[],
   referenceReps: number
-): Record<"A" | "B" | "C", number> {
-  const byGroup: Record<"A" | "B" | "C", number[]> = { A: [], B: [], C: [] };
+): Partial<Record<IntervalGroup, GroupRepsResult>> {
+  const byGroup: Record<IntervalGroup, number[]> = { A: [], B: [] };
   for (const iv of intervals) byGroup[iv.group].push(iv.interval);
 
   const median = (vals: number[]) => {
@@ -90,20 +98,21 @@ export function repsPerGroup(
     return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
   };
 
-  const medians: Partial<Record<"A" | "B" | "C", number>> = {};
-  for (const g of ["A", "B", "C"] as const) {
+  const medians: Partial<Record<IntervalGroup, number>> = {};
+  for (const g of ["A", "B"] as const) {
     if (byGroup[g].length > 0) medians[g] = median(byGroup[g]);
   }
 
-  // Total time is anchored on A; if nobody's in A, fall back to whichever group has swimmers.
-  const anchorGroup = (["A", "B", "C"] as const).find((g) => medians[g] !== undefined);
+  // Total time is anchored on A; if nobody's in A, fall back to B.
+  const anchorGroup = (["A", "B"] as const).find((g) => medians[g] !== undefined);
   const totalTime = anchorGroup ? referenceReps * medians[anchorGroup]! : 0;
 
-  const result: Record<"A" | "B" | "C", number> = { A: 0, B: 0, C: 0 };
-  for (const g of ["A", "B", "C"] as const) {
+  const result: Partial<Record<IntervalGroup, GroupRepsResult>> = {};
+  for (const g of ["A", "B"] as const) {
     const m = medians[g];
     if (m === undefined) continue;
-    result[g] = g === anchorGroup ? referenceReps : Math.max(1, Math.round(totalTime / m));
+    const reps = g === anchorGroup ? referenceReps : Math.max(1, Math.round(totalTime / m));
+    result[g] = { reps, totalSeconds: reps * m };
   }
   return result;
 }

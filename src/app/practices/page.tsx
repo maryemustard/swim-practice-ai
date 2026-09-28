@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { deletePracticeAction } from "./actions";
 
 export default async function PracticesLogPage() {
   const practices = await prisma.practice.findMany({
@@ -22,6 +23,7 @@ export default async function PracticesLogPage() {
               <th className="py-2 px-4">Group</th>
               <th className="py-2 px-4">Focus</th>
               <th className="py-2 px-4">Source</th>
+              <th className="py-2 px-4"></th>
             </tr>
           </thead>
           <tbody>
@@ -43,11 +45,19 @@ export default async function PracticesLogPage() {
                     {p.source}
                   </span>
                 </td>
+                <td className="py-2 px-4 text-right">
+                  <form action={deletePracticeAction}>
+                    <input type="hidden" name="practiceId" value={p.id} />
+                    <button type="submit" className="text-xs text-red-600 hover:text-red-800">
+                      Delete
+                    </button>
+                  </form>
+                </td>
               </tr>
             ))}
             {practices.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-4 px-4 text-slate-500">
+                <td colSpan={5} className="py-4 px-4 text-slate-500">
                   No practices generated yet — go to a group page and generate one.
                 </td>
               </tr>
