@@ -23,6 +23,7 @@ export async function createGroupAction(formData: FormData) {
     },
   });
 
+  revalidatePath("/groups");
   revalidatePath("/");
 }
 
@@ -40,6 +41,7 @@ export async function updateGroupAction(formData: FormData) {
     },
   });
 
+  revalidatePath("/groups");
   revalidatePath("/");
   revalidatePath(`/groups/${groupId}`);
   redirect(`/groups/${groupId}`);
@@ -49,6 +51,7 @@ export async function deleteGroupAction(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "");
   if (!groupId) return;
   await prisma.group.delete({ where: { id: groupId } });
+  revalidatePath("/groups");
   revalidatePath("/");
-  redirect("/");
+  redirect("/groups");
 }

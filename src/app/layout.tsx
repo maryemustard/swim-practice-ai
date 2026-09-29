@@ -31,7 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/" className="font-semibold text-lg tracking-tight text-white flex items-center gap-1.5">
               <span>🌊</span> Swim Practice AI
             </Link>
-            <Link href="/" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
+            <Link href="/groups" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
               Groups
             </Link>
             <Link href="/practices" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
