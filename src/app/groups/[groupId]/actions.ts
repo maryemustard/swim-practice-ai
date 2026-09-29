@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { generatePractice, resolvePractice } from "@/lib/generatePractice";
 import { parseTimeToSeconds } from "@/lib/time";
+import { parseLocalDate } from "@/lib/calendarMonth";
 
 type CsvRow = { name?: string; event?: string; kind?: string; time?: string; seconds?: string; gender?: string };
 
@@ -93,7 +94,7 @@ export async function addGoalMeetAction(formData: FormData) {
   if (!groupId || !name || !date) return;
 
   await prisma.goalMeet.create({
-    data: { groupId, name, date: new Date(date), taperWeeks, attendanceNotes },
+    data: { groupId, name, date: parseLocalDate(date), taperWeeks, attendanceNotes },
   });
   revalidatePath(`/groups/${groupId}`);
   revalidatePath(`/groups/${groupId}/upload`);
@@ -113,6 +114,7 @@ export async function addDrillAction(formData: FormData) {
 export async function generatePracticeAction(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "");
   const focus = String(formData.get("focus") ?? "aerobic base").trim();
+  const dateStr = String(formData.get("date") ?? "");
   if (!groupId) return;
 
   const group = await prisma.group.findUniqueOrThrow({
@@ -134,10 +136,35 @@ export async function generatePracticeAction(formData: FormData) {
       source: resolved.source,
       content: resolved.text,
       intervals: JSON.stringify(resolved.paceSets),
+      ...(dateStr ? { date: parseLocalDate(dateStr) } : {}),
     },
   });
 
   revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/calendar`);
+  revalidatePath("/practices");
+  redirect(`/practices/${saved.id}`);
+}
+
+export async function addManualPracticeAction(formData: FormData) {
+  const groupId = String(formData.get("groupId") ?? "");
+  const dateStr = String(formData.get("date") ?? "");
+  const focus = String(formData.get("focus") ?? "").trim() || null;
+  const content = String(formData.get("content") ?? "").trim();
+  if (!groupId || !dateStr || !content) return;
+
+  const saved = await prisma.practice.create({
+    data: {
+      groupId,
+      focus,
+      source: "manual",
+      content,
+      date: parseLocalDate(dateStr),
+    },
+  });
+
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/calendar`);
   revalidatePath("/practices");
   redirect(`/practices/${saved.id}`);
 }

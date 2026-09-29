@@ -11,10 +11,11 @@ datasource db {
 }
 
 model Team {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   name      String
   groups    Group[]
-  createdAt DateTime @default(now())
+  events    TeamEvent[]
+  createdAt DateTime    @default(now())
 }
 
 model Group {
@@ -31,6 +32,19 @@ model Group {
   drills        DrillEntry[]
   practices     Practice[]
 
+  createdAt DateTime @default(now())
+}
+
+// Team-wide calendar: big meets, time trials — anything that isn't scoped
+// to one group's own practice schedule.
+model TeamEvent {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  name      String
+  date      DateTime
+  type      String   @default("meet") // "meet" | "time_trial" | "other"
+  notes     String?
   createdAt DateTime @default(now())
 }
 
@@ -91,6 +105,7 @@ model Practice {
   focus     String?
   content   String // full generated practice, markdown
   intervals String? // JSON: per-swimmer A/B/C intervals per set
-  source    String   @default("template") // "template" | "claude"
-  createdAt DateTime @default(now())
+  source    String   @default("template") // "template" | "claude" | "manual"
+  date      DateTime @default(now()) // the calendar day this practice is FOR — may be scheduled ahead
+  createdAt DateTime @default(now()) // when it was actually generated/entered
 }

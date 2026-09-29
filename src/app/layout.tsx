@@ -37,6 +37,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/practices" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
               Practice Log
             </Link>
+            <Link href="/calendar" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
+              Team Calendar
+            </Link>
           </nav>
           <Wave className="absolute -bottom-px left-0 w-full h-6" fill="#ecfeff" />
         </header>
