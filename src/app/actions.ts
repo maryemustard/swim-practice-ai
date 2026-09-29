@@ -26,6 +26,25 @@ export async function createGroupAction(formData: FormData) {
   revalidatePath("/");
 }
 
+export async function updateGroupAction(formData: FormData) {
+  const groupId = String(formData.get("groupId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!groupId || !name) return;
+
+  await prisma.group.update({
+    where: { id: groupId },
+    data: {
+      name,
+      ageRange: String(formData.get("ageRange") ?? "").trim() || null,
+      targetStandard: String(formData.get("targetStandard") ?? "").trim() || null,
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath(`/groups/${groupId}`);
+  redirect(`/groups/${groupId}`);
+}
+
 export async function deleteGroupAction(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "");
   if (!groupId) return;

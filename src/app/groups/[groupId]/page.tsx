@@ -29,12 +29,20 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
           {group.ageRange && <p className="text-slate-500 text-sm">Ages {group.ageRange}</p>}
           {group.targetStandard && <p className="text-slate-700 mt-1">{group.targetStandard}</p>}
         </div>
-        <Link
-          href={`/groups/${group.id}/upload`}
-          className="text-sm border border-teal-300 text-teal-700 rounded-full px-3 py-1.5 hover:bg-teal-50 transition-colors"
-        >
-          Upload data
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/groups/${group.id}/edit`}
+            className="text-sm border border-slate-300 text-slate-700 rounded-full px-3 py-1.5 hover:bg-slate-50 transition-colors"
+          >
+            Edit group
+          </Link>
+          <Link
+            href={`/groups/${group.id}/upload`}
+            className="text-sm border border-teal-300 text-teal-700 rounded-full px-3 py-1.5 hover:bg-teal-50 transition-colors"
+          >
+            Upload data
+          </Link>
+        </div>
       </div>
 
       {goalMeet && (
