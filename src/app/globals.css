@@ -7,7 +7,13 @@
 
 /* Explicitly light-themed for now — layout.tsx sets body colors via Tailwind
    classes; no prefers-color-scheme override so cards stay readable regardless
-   of the viewer's system theme. */
+   of the viewer's system theme. color-scheme: light stops the browser from
+   painting a dark default canvas behind semi-transparent backgrounds. */
+html {
+  color-scheme: light;
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
+  background-color: #ffffff;
 }

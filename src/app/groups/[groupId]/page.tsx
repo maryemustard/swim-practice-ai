@@ -25,13 +25,13 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
     <div className="flex flex-col gap-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">{group.name}</h1>
+          <h1 className="text-2xl font-semibold text-teal-900">{group.name}</h1>
           {group.ageRange && <p className="text-slate-500 text-sm">Ages {group.ageRange}</p>}
           {group.targetStandard && <p className="text-slate-700 mt-1">{group.targetStandard}</p>}
         </div>
         <Link
           href={`/groups/${group.id}/upload`}
-          className="text-sm border border-slate-300 rounded px-3 py-1.5 hover:bg-white"
+          className="text-sm border border-teal-300 text-teal-700 rounded-full px-3 py-1.5 hover:bg-teal-50 transition-colors"
         >
           Upload data
         </Link>
@@ -121,8 +121,8 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-300 bg-white p-5">
-        <h2 className="font-medium mb-3">Generate a practice</h2>
+      <section className="rounded-xl border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-5">
+        <h2 className="font-medium mb-3 text-teal-900">🏊 Generate a practice</h2>
         <form action={generatePracticeAction} className="flex flex-wrap gap-3 items-end">
           <input type="hidden" name="groupId" value={group.id} />
           <div className="flex flex-col gap-1">
@@ -134,7 +134,7 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
               defaultValue="aerobic base"
             />
           </div>
-          <button type="submit" className="bg-slate-900 text-white text-sm rounded px-4 py-1.5 hover:bg-slate-700">
+          <button type="submit" className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors">
             Generate practice
           </button>
         </form>

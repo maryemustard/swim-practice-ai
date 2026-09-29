@@ -39,7 +39,7 @@ Ava Chen,100 Free,goal,55.0`}
         <form action={uploadTimesCsvAction} className="flex items-center gap-3">
           <input type="hidden" name="groupId" value={group.id} />
           <input type="file" name="file" accept=".csv" required className="text-sm" />
-          <button type="submit" className="bg-slate-900 text-white text-sm rounded px-4 py-1.5 hover:bg-slate-700">
+          <button type="submit" className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors">
             Upload CSV
           </button>
         </form>
@@ -68,7 +68,7 @@ Ava Chen,100 Free,goal,55.0`}
             <label className="text-xs text-slate-500">Seconds</label>
             <input name="seconds" type="number" step="0.01" required className="border border-slate-300 rounded px-3 py-1.5 text-sm w-24" />
           </div>
-          <button type="submit" className="bg-slate-900 text-white text-sm rounded px-4 py-1.5 hover:bg-slate-700">
+          <button type="submit" className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors">
             Add
           </button>
         </form>
@@ -84,7 +84,7 @@ Ava Chen,100 Free,goal,55.0`}
           <input type="hidden" name="groupId" value={group.id} />
           <input name="title" required placeholder="e.g. Aerobic base — week of 9/8" className="border border-slate-300 rounded px-3 py-1.5 text-sm" />
           <textarea name="content" required rows={6} placeholder="Warmup: ...&#10;Main set: ...&#10;Cooldown: ..." className="border border-slate-300 rounded px-3 py-1.5 text-sm font-mono" />
-          <button type="submit" className="self-start bg-slate-900 text-white text-sm rounded px-4 py-1.5 hover:bg-slate-700">
+          <button type="submit" className="self-start bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors">
             Save style example
           </button>
         </form>
@@ -110,7 +110,7 @@ Ava Chen,100 Free,goal,55.0`}
             <label className="text-xs text-slate-500">Attendance expectations</label>
             <input name="attendanceNotes" placeholder="e.g. 4x/week -> low 30s, 6x/week -> high 20s" className="border border-slate-300 rounded px-3 py-1.5 text-sm w-full" />
           </div>
-          <button type="submit" className="bg-slate-900 text-white text-sm rounded px-4 py-1.5 hover:bg-slate-700">
+          <button type="submit" className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors">
             Save
           </button>
         </form>
@@ -128,7 +128,7 @@ Ava Chen,100 Free,goal,55.0`}
             <label className="text-xs text-slate-500">What it is / what it's for</label>
             <input name="definition" required className="border border-slate-300 rounded px-3 py-1.5 text-sm w-full" />
           </div>
-          <button type="submit" className="bg-slate-900 text-white text-sm rounded px-4 py-1.5 hover:bg-slate-700">
+          <button type="submit" className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors">
             Add
           </button>
         </form>

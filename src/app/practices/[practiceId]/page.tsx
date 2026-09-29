@@ -81,8 +81,8 @@ export default async function PracticeDetailPage({
                               <span
                                 className={`text-xs font-medium rounded px-1.5 py-0.5 ${
                                   iv.group === "A"
-                                    ? "bg-emerald-100 text-emerald-700"
-                                    : "bg-amber-100 text-amber-700"
+                                    ? "bg-teal-100 text-teal-700"
+                                    : "bg-orange-100 text-orange-700"
                                 }`}
                               >
                                 {iv.group}

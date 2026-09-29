@@ -39,7 +39,7 @@ export default async function PracticesLogPage() {
                 <td className="py-2 px-4">
                   <span
                     className={`text-xs rounded px-1.5 py-0.5 ${
-                      p.source === "claude" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
+                      p.source === "claude" ? "bg-teal-100 text-teal-700" : "bg-slate-100 text-slate-600"
                     }`}
                   >
                     {p.source}
