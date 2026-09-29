@@ -37,6 +37,12 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
             Edit group
           </Link>
           <Link
+            href={`/groups/${group.id}/ask`}
+            className="text-sm border border-orange-300 text-orange-700 rounded-full px-3 py-1.5 hover:bg-orange-50 transition-colors"
+          >
+            💬 Ask about this group
+          </Link>
+          <Link
             href={`/groups/${group.id}/upload`}
             className="text-sm border border-teal-300 text-teal-700 rounded-full px-3 py-1.5 hover:bg-teal-50 transition-colors"
           >
