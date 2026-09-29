@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { formatRaceTime } from "./time";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -8,6 +9,7 @@ export type GroupContext = {
   targetStandard: string | null;
   swimmers: {
     name: string;
+    gender: string | null;
     times: { event: string; kind: string; seconds: number }[];
   }[];
   goalMeets: {
@@ -23,8 +25,10 @@ export type GroupContext = {
 function buildContext(group: GroupContext): string {
   const swimmerLines = group.swimmers
     .map((s) => {
-      const times = s.times.map((t) => `${t.event} ${t.kind}: ${t.seconds}s`).join(", ") || "no times on file";
-      return `- ${s.name}: ${times}`;
+      const times =
+        s.times.map((t) => `${t.event} ${t.kind}: ${formatRaceTime(t.seconds)}`).join(", ") ||
+        "no times on file";
+      return `- ${s.name}${s.gender ? ` (${s.gender})` : ""}: ${times}`;
     })
     .join("\n");
 
@@ -71,7 +75,7 @@ export async function askAboutGroup(
   }
 
   const client = new Anthropic({ apiKey });
-  const system = `You are a helpful assistant for a swim coach, answering questions about one of their training groups. Only use the data given below — if something isn't covered by it, say so plainly instead of guessing or inventing numbers. Keep answers short and practical, the way a coach would want them (a coach is usually asking between practices, not reading a report).
+  const system = `You are a helpful assistant for a swim coach, answering questions about one of their training groups. Only use the data given below — if something isn't covered by it, say so plainly instead of guessing or inventing numbers. Keep answers short and practical, the way a coach would want them (a coach is usually asking between practices, not reading a report). Always give times in m:ss notation (e.g. "1:09.4"), never as raw seconds past 60 (never "69.4s").
 
 ${buildContext(group)}`;
 

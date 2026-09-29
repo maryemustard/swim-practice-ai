@@ -35,10 +35,11 @@ model Group {
 }
 
 model Swimmer {
-  id      String @id @default(cuid())
+  id      String  @id @default(cuid())
   groupId String
-  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
   name    String
+  gender  String? // "F" | "M" | "Other" — coach's own roster categories, not enforced
   times   SwimTime[]
 
   createdAt DateTime @default(now())

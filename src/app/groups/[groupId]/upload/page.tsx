@@ -26,15 +26,19 @@ export default async function UploadPage({ params }: PageProps<"/groups/[groupId
       <section className="rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="font-medium mb-2">Roster times — CSV upload</h2>
         <p className="text-sm text-slate-600 mb-3">
-          Columns: <code className="bg-slate-100 px-1 rounded">name, event, kind, seconds</code> —{" "}
+          Columns: <code className="bg-slate-100 px-1 rounded">name, gender, event, kind, time</code> —{" "}
           <code className="bg-slate-100 px-1 rounded">kind</code> is <code>current</code> or{" "}
-          <code>goal</code>. Matches a SportsEngine Team Manager custom Excel export saved as CSV, or any
-          spreadsheet with those columns.
+          <code>goal</code>; <code className="bg-slate-100 px-1 rounded">gender</code> is optional.{" "}
+          <code className="bg-slate-100 px-1 rounded">time</code> can be <code>m:ss.hh</code> (e.g.{" "}
+          <code>1:09.40</code>) or bare seconds under a minute (e.g. <code>28.4</code>) — never seconds past
+          60. Matches a SportsEngine Team Manager custom Excel export saved as CSV, or any spreadsheet with
+          those columns.
         </p>
         <pre className="text-xs bg-slate-50 border border-slate-100 rounded p-2 mb-3 text-slate-500">
-{`name,event,kind,seconds
-Ava Chen,100 Free,current,58.4
-Ava Chen,100 Free,goal,55.0`}
+{`name,gender,event,kind,time
+Ava Chen,F,100 Free,current,58.40
+Ava Chen,F,100 Free,goal,55.00
+Milo Nguyen,M,100 IM,current,1:09.20`}
         </pre>
         <form action={uploadTimesCsvAction} className="flex items-center gap-3">
           <input type="hidden" name="groupId" value={group.id} />
@@ -54,6 +58,15 @@ Ava Chen,100 Free,goal,55.0`}
             <input name="name" required className="border border-slate-300 rounded px-3 py-1.5 text-sm" />
           </div>
           <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-500">Gender</label>
+            <select name="gender" defaultValue="" className="border border-slate-300 rounded px-3 py-1.5 text-sm">
+              <option value="">—</option>
+              <option value="F">F</option>
+              <option value="M">M</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
             <label className="text-xs text-slate-500">Event</label>
             <input name="event" required placeholder="100 Free" className="border border-slate-300 rounded px-3 py-1.5 text-sm w-32" />
           </div>
@@ -65,8 +78,13 @@ Ava Chen,100 Free,goal,55.0`}
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-slate-500">Seconds</label>
-            <input name="seconds" type="number" step="0.01" required className="border border-slate-300 rounded px-3 py-1.5 text-sm w-24" />
+            <label className="text-xs text-slate-500">Time (m:ss)</label>
+            <input
+              name="time"
+              required
+              placeholder="1:09.40"
+              className="border border-slate-300 rounded px-3 py-1.5 text-sm w-24"
+            />
           </div>
           <button type="submit" className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors">
             Add

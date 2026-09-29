@@ -5,8 +5,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { generatePractice, resolvePractice } from "@/lib/generatePractice";
+import { parseTimeToSeconds } from "@/lib/time";
 
-type CsvRow = { name?: string; event?: string; kind?: string; seconds?: string };
+type CsvRow = { name?: string; event?: string; kind?: string; time?: string; seconds?: string; gender?: string };
 
 export async function uploadTimesCsvAction(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "");
@@ -20,13 +21,21 @@ export async function uploadTimesCsvAction(formData: FormData) {
     const name = row.name?.trim();
     const event = row.event?.trim();
     const kind = row.kind?.trim().toLowerCase();
-    const seconds = Number(row.seconds);
-    if (!name || !event || !kind || !Number.isFinite(seconds)) continue;
+    const gender = row.gender?.trim().toUpperCase() || undefined;
+    const rawTime = (row.time ?? row.seconds ?? "").trim();
+    if (!name || !event || !kind || !rawTime) continue;
+
+    let seconds: number;
+    try {
+      seconds = parseTimeToSeconds(rawTime);
+    } catch {
+      continue; // skip unparseable rows rather than failing the whole import
+    }
 
     const swimmer = await prisma.swimmer.upsert({
       where: { id: `${groupId}:${name}` },
-      update: {},
-      create: { id: `${groupId}:${name}`, groupId, name },
+      update: gender ? { gender } : {},
+      create: { id: `${groupId}:${name}`, groupId, name, gender },
     });
 
     await prisma.swimTime.create({
@@ -43,13 +52,20 @@ export async function addSwimmerTimeAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const event = String(formData.get("event") ?? "").trim();
   const kind = String(formData.get("kind") ?? "current");
-  const seconds = Number(formData.get("seconds"));
-  if (!groupId || !name || !event || !Number.isFinite(seconds)) return;
+  const gender = String(formData.get("gender") ?? "").trim() || undefined;
+  if (!groupId || !name || !event) return;
+
+  let seconds: number;
+  try {
+    seconds = parseTimeToSeconds(String(formData.get("time") ?? ""));
+  } catch {
+    return;
+  }
 
   const swimmer = await prisma.swimmer.upsert({
     where: { id: `${groupId}:${name}` },
-    update: {},
-    create: { id: `${groupId}:${name}`, groupId, name },
+    update: gender ? { gender } : {},
+    create: { id: `${groupId}:${name}`, groupId, name, gender },
   });
 
   await prisma.swimTime.create({ data: { swimmerId: swimmer.id, event, kind, seconds } });

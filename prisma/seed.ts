@@ -21,6 +21,7 @@ async function main() {
         create: [
           {
             name: "Ava Chen",
+            gender: "F",
             times: {
               create: [
                 { event: "100 Free", kind: "current", seconds: 58.4 },
@@ -31,6 +32,7 @@ async function main() {
           },
           {
             name: "Jordan Lee",
+            gender: "M",
             times: {
               create: [
                 { event: "100 Free", kind: "current", seconds: 62.1 },
@@ -40,6 +42,7 @@ async function main() {
           },
           {
             name: "Priya Patel",
+            gender: "F",
             times: {
               create: [
                 { event: "100 Free", kind: "current", seconds: 65.8 },
@@ -49,6 +52,7 @@ async function main() {
           },
           {
             name: "Sam Torres",
+            gender: "M",
             times: {
               create: [
                 { event: "100 Free", kind: "current", seconds: 70.3 },
@@ -102,10 +106,12 @@ async function main() {
         create: [
           {
             name: "Milo Nguyen",
+            gender: "M",
             times: { create: [{ event: "100 Free", kind: "current", seconds: 78.5 }] },
           },
           {
             name: "Zoe Williams",
+            gender: "F",
             times: { create: [{ event: "100 Free", kind: "current", seconds: 82.1 }] },
           },
         ],
