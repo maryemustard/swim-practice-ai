@@ -80,11 +80,11 @@ export type GroupRepsResult = {
  * Same total set time across groups, not the same rep count: a slower
  * group does fewer reps of the same distance rather than swimming the same
  * count on a more generous interval. `referenceReps` is the rep count as
- * written for the fastest (A) group; other groups' rep counts are scaled so
- * reps * interval comes out CLOSE to A's total time, rounded DOWN — a
- * slower group's total is guaranteed to never exceed the anchor group's,
- * only come in under it. Callers should still show each group's actual
- * total (`totalSeconds`) since it won't always be exactly identical.
+ * written for the fastest (A) group; other groups' rep counts are rounded
+ * to whichever whole number lands CLOSEST to A's total time — the goal is
+ * both groups finishing together, not a guaranteed upper or lower bound.
+ * Whole reps mean it won't always land exactly equal; callers should still
+ * show each group's actual total (`totalSeconds`).
  */
 export function repsPerGroup(
   intervals: SwimmerInterval[],
@@ -112,9 +112,7 @@ export function repsPerGroup(
   for (const g of ["A", "B"] as const) {
     const m = medians[g];
     if (m === undefined) continue;
-    // Floor, not round: a slower group should never end up taking LONGER
-    // than the anchor group because of rounding — under is fine, over isn't.
-    const reps = g === anchorGroup ? referenceReps : Math.max(1, Math.floor(totalTime / m));
+    const reps = g === anchorGroup ? referenceReps : Math.max(1, Math.round(totalTime / m));
     result[g] = { reps, totalSeconds: reps * m };
   }
   return result;
