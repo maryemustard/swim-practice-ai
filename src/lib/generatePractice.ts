@@ -217,7 +217,7 @@ INTERVALS_JSON:
 
   const msg = await client.messages.create({
     model: "claude-sonnet-5",
-    max_tokens: 4096,
+    max_tokens: 16000,
     messages: [{ role: "user", content: prompt }],
   });
 
