@@ -100,6 +100,19 @@ function estimateTargetMinutes(styleExamples: { content: string }[]): number | n
 }
 
 /**
+ * A one-time note can name an explicit length ("120 minutes", "2 hour
+ * practice") that should override the examples-derived default for just
+ * this generation. Minutes and hours only — no vague phrases.
+ */
+function parseDurationMinutes(note: string): number | null {
+  const hourMatch = note.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/i);
+  if (hourMatch) return Math.round(Number(hourMatch[1]) * 60);
+  const minMatch = note.match(/(\d+)\s*(?:minutes?|mins?)\b/i);
+  if (minMatch) return Number(minMatch[1]);
+  return null;
+}
+
+/**
  * Claude's cumulative-minute arithmetic across a long practice is only
  * approximate — it lands close to a target total, not exactly on it. Force
  * the LAST parenthetical number in the text to the real deterministic total
@@ -162,7 +175,14 @@ async function claudePractice(
     .map((s) => `### ${s.title}\n${s.content}`)
     .join("\n\n");
   const drillText = group.drills.map((d) => `- ${d.name}: ${d.definition}`).join("\n");
-  const targetMinutes = estimateTargetMinutes(group.styleExamples);
+  const examplesTargetMinutes = estimateTargetMinutes(group.styleExamples);
+  const notedMinutes = todayNote ? parseDurationMinutes(todayNote) : null;
+  // What Claude should fill with actual content (before cooldown) vs. the
+  // real final number the practice must end on (content + cooldown). A
+  // coach-specified length for today overrides the examples-derived default.
+  const mainContentMinutes = notedMinutes !== null ? Math.max(notedMinutes - COOLDOWN_MINUTES, 1) : examplesTargetMinutes;
+  const finalTotal =
+    notedMinutes !== null ? notedMinutes : examplesTargetMinutes !== null ? examplesTargetMinutes + COOLDOWN_MINUTES : null;
 
   const prompt = `You write swim practices for a specific coach and group. Write the practice EXACTLY the way this coach writes theirs — same notation, same structure (e.g. "Then go X times through" blocks if they use that), same abbreviations, same level of terseness. Do not reformat it into a generic list — copy their voice.
 
@@ -193,9 +213,11 @@ For those personalized main sets, write it the way this coach actually does: eve
 
 Make the main set carry real weight in the practice — matching the volume this coach's own examples actually use for a main set, not a token handful of reps.
 ${
-  targetMinutes
-    ? `\nThis coach's own examples number their running total up to about ${targetMinutes} minutes (based on the cumulative-time numbers in parentheses in their examples above), but that's where THEIR notation stops counting, not where practice actually ends — their cooldown after that point is real time too. The practice you write must keep the running-total-in-parentheses convention going THROUGH the cooldown, ending at (${targetMinutes + COOLDOWN_MINUTES}) on the very last line, not stopping at (${targetMinutes}). Do not stop short after one or two sets, and do not leave the cooldown untimed — give it its own final number.`
-    : ""
+  notedMinutes !== null
+    ? `\nThe coach asked for a ${notedMinutes}-minute practice today specifically (see "SOMETHING SPECIFIC FOR TODAY ONLY" above) — that overrides their usual length. Write enough real content (warmup through the last main set, before cooldown) to fill about ${mainContentMinutes} minutes, then a cooldown, with the running-total-in-parentheses convention continuing through the cooldown and ending at (${finalTotal}) on the very last line. Do not stop short.`
+    : mainContentMinutes
+      ? `\nThis coach's own examples number their running total up to about ${mainContentMinutes} minutes (based on the cumulative-time numbers in parentheses in their examples above), but that's where THEIR notation stops counting, not where practice actually ends — their cooldown after that point is real time too. The practice you write must keep the running-total-in-parentheses convention going THROUGH the cooldown, ending at (${finalTotal}) on the very last line, not stopping at (${mainContentMinutes}). Do not stop short after one or two sets, and do not leave the cooldown untimed — give it its own final number.`
+      : ""
 }
 
 Respond in EXACTLY this format, nothing else:
@@ -230,7 +252,6 @@ INTERVALS_JSON:
     return null;
   }
 
-  const finalTotal = targetMinutes ? targetMinutes + COOLDOWN_MINUTES : null;
   const practiceText = enforceFinalTotal(practiceMatch[1].trim(), finalTotal);
 
   // The JSON block may come back wrapped in a ```json fence despite instructions not to.
