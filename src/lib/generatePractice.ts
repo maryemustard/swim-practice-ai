@@ -76,6 +76,13 @@ function referenceTimeFor(swimmer: GroupForGeneration["swimmers"][number]) {
   return any ? { seconds: any.seconds, distance: 100 } : null;
 }
 
+// The coach's own examples stop the running-total numbering before the
+// cooldown (e.g. "...(86)\n100 SD" — the cooldown itself is left untimed),
+// but the coach wants the GENERATED practice to keep counting through the
+// cooldown. This is how much longer the actual end of practice runs past
+// that last written number.
+const COOLDOWN_MINUTES = 4;
+
 /**
  * Coaches who annotate practices with cumulative time in parentheses — "(8)",
  * "(28)", "(84)" — give us a free signal for how long their practices
@@ -166,7 +173,7 @@ For those personalized main sets, write it the way this coach actually does: eve
 Make the main set carry real weight in the practice — matching the volume this coach's own examples actually use for a main set, not a token handful of reps.
 ${
   targetMinutes
-    ? `\nThis coach's own practices run about ${targetMinutes} minutes total (based on the cumulative-time numbers in parentheses in their examples above). Match that total length — do not stop short after one or two sets. If you use the same running-total-in-parentheses convention they do, keep it correct and strictly increasing to the end, consistent with a ${targetMinutes}-minute practice.`
+    ? `\nThis coach's own examples number their running total up to about ${targetMinutes} minutes (based on the cumulative-time numbers in parentheses in their examples above), but that's where THEIR notation stops counting, not where practice actually ends — their cooldown after that point is real time too. The practice you write must keep the running-total-in-parentheses convention going THROUGH the cooldown, ending at (${targetMinutes + COOLDOWN_MINUTES}) on the very last line, not stopping at (${targetMinutes}). Do not stop short after one or two sets, and do not leave the cooldown untimed — give it its own final number.`
     : ""
 }
 
