@@ -1,15 +1,18 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  GroupRepsResult,
+  GroupSetResult,
   IntervalGroup,
   SetType,
   SwimmerInterval,
   assignIntervalGroups,
+  bestSetForTarget,
   formatSeconds,
-  repsPerGroup,
+  median,
   targetInterval,
   targetTimeForRepeat,
 } from "./paceEngine";
+
+const REST_SECONDS = 10;
 
 // A single portion of the practice where swimmers hold their own personalized
 // pace (a real main set) rather than swimming together as a group.
@@ -46,7 +49,7 @@ export type GroupForGeneration = {
 
 export type ResolvedPaceSet = PaceSetSpec & {
   intervals: SwimmerInterval[];
-  groupReps: Partial<Record<IntervalGroup, GroupRepsResult>>;
+  groupSets: Partial<Record<IntervalGroup, GroupSetResult>>;
 };
 
 export type ResolvedPractice = {
@@ -142,7 +145,9 @@ ${drillText || "(none provided yet)"}
 
 Some parts of a practice are swum together as a group (warmup, pre-set, usually cooldown, often kick/drill) — write those with a normal fixed interval, same as the coach would. But for each part where swimmers should hold their OWN personalized pace (a real main set), do NOT invent one interval for everyone — instead write a placeholder token in the text like [[PACE:main1]] where the interval would go, and describe that set in the accompanying JSON so we can compute each swimmer's real interval and substitute it in.
 
-For those personalized main sets, this team's coaches scale the WORK, not just the rest: a slower group does fewer reps of the same distance so the whole set takes about the same total time as the faster group, rather than everyone doing the same reps with slower swimmers just getting more rest. Write the rep count in the text as if for the fastest group, and report that same number as "reps" in the JSON — the actual per-group rep counts (fewer for slower groups, same total time) get computed and substituted in along with the pace.
+For those personalized main sets, write it the way this coach actually does: every group does the SAME number of reps (write that rep count, for the fastest group, as "reps" in the JSON) — the slower group's distance per rep gets shortened instead, computed and substituted in automatically so both groups land on close to the same total time. You don't need to work out the shortened distance yourself; just write the set for the fastest group normally and let the placeholder carry the rest.
+
+Make the main set carry real weight in the practice — matching the volume this coach's own examples actually use for a main set, not a token handful of reps.
 ${
   targetMinutes
     ? `\nThis coach's own practices run about ${targetMinutes} minutes total (based on the cumulative-time numbers in parentheses in their examples above). Match that total length — do not stop short after one or two sets. If you use the same running-total-in-parentheses convention they do, keep it correct and strictly increasing to the end, consistent with a ${targetMinutes}-minute practice.`
@@ -208,19 +213,19 @@ export async function generatePractice(
   return claudeResult ?? templatePractice(focus);
 }
 
-function inlineSummary(intervals: SwimmerInterval[], groupReps: Partial<Record<IntervalGroup, GroupRepsResult>>): string {
+function inlineSummary(intervals: SwimmerInterval[], groupSets: Partial<Record<IntervalGroup, GroupSetResult>>): string {
   const groups: Record<IntervalGroup, number[]> = { A: [], B: [] };
   for (const iv of intervals) groups[iv.group].push(iv.interval);
 
   const parts = (["A", "B"] as const)
-    .filter((g) => groups[g].length > 0 && groupReps[g])
+    .filter((g) => groups[g].length > 0 && groupSets[g])
     .map((g) => {
       const vals = groups[g];
       const lo = Math.min(...vals);
       const hi = Math.max(...vals);
       const range = lo === hi ? formatSeconds(lo) : `${formatSeconds(lo)}-${formatSeconds(hi)}`;
-      const { reps, totalSeconds } = groupReps[g]!;
-      return `${g}: ${reps}x on ${range} (~${formatSeconds(totalSeconds)} total)`;
+      const { reps, distance, totalSeconds } = groupSets[g]!;
+      return `${g}: ${reps}x${distance} on ${range} (~${formatSeconds(totalSeconds)} total)`;
     });
   return parts.length > 0 ? `(${parts.join(" · ")})` : "(no times on file)";
 }
@@ -229,28 +234,71 @@ function inlineSummary(intervals: SwimmerInterval[], groupReps: Partial<Record<I
  * Compute every swimmer's target/interval for each personalized pace set,
  * and substitute a compact inline summary into the practice text so it reads
  * naturally in the coach's own voice with real numbers dropped in.
+ *
+ * Every group swims the SAME rep count (the whole point of this scaling —
+ * everyone finishes together). The lever for a slower group is DISTANCE per
+ * rep, searched in 25-yard steps to land as close as possible to the fastest
+ * group's total time, same as how the real coach this was built from scales
+ * a set by hand ("B group 75/100/75" against an "A" written as 100s).
  */
 export function resolvePractice(group: GroupForGeneration, practice: GeneratedPractice): ResolvedPractice {
   const resolvedSets: ResolvedPaceSet[] = [];
   let text = practice.text;
 
   for (const spec of practice.paceSets) {
-    const swimmerTargets = group.swimmers
+    const swimmersWithRef = group.swimmers
       .map((s) => {
         const ref = referenceTimeFor(s);
-        if (!ref) return null;
-        const targetTime = targetTimeForRepeat(ref.seconds, ref.distance, spec.distance, spec.setType);
-        const interval = targetInterval(targetTime, 10);
-        return { id: s.id, name: s.name, targetTime, interval };
+        return ref ? { id: s.id, name: s.name, ref } : null;
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
 
-    const intervals = assignIntervalGroups(swimmerTargets);
-    const groupReps = repsPerGroup(intervals, spec.reps);
-    resolvedSets.push({ ...spec, intervals, groupReps });
+    // Group membership is decided at the written (A) distance, by raw ability.
+    const atWrittenDistance = swimmersWithRef.map((s) => {
+      const targetTime = targetTimeForRepeat(s.ref.seconds, s.ref.distance, spec.distance, spec.setType);
+      return { id: s.id, name: s.name, targetTime, interval: targetInterval(targetTime, REST_SECONDS) };
+    });
+    const groupOf = new Map(assignIntervalGroups(atWrittenDistance).map((g) => [g.swimmerId, g.group]));
+
+    const aRefs = swimmersWithRef.filter((s) => groupOf.get(s.id) === "A");
+    const bRefs = swimmersWithRef.filter((s) => groupOf.get(s.id) === "B");
+
+    const buildIntervals = (
+      refs: typeof swimmersWithRef,
+      distance: number,
+      g: IntervalGroup
+    ): SwimmerInterval[] =>
+      refs.map((s) => {
+        const targetTime = targetTimeForRepeat(s.ref.seconds, s.ref.distance, distance, spec.setType);
+        return { swimmerId: s.id, swimmerName: s.name, targetTime, interval: targetInterval(targetTime, REST_SECONDS), group: g };
+      });
+
+    const aIntervals = buildIntervals(aRefs, spec.distance, "A");
+    const aTotal = aIntervals.length > 0 ? spec.reps * median(aIntervals.map((x) => x.interval)) : 0;
+
+    let bSet = { reps: spec.reps, distance: spec.distance, totalSeconds: 0 };
+    let bIntervals: SwimmerInterval[] = [];
+    if (bRefs.length > 0) {
+      bSet = bestSetForTarget(
+        bRefs.map((s) => s.ref),
+        spec.setType,
+        spec.reps,
+        REST_SECONDS,
+        aTotal,
+        spec.distance
+      );
+      bIntervals = buildIntervals(bRefs, bSet.distance, "B");
+    }
+
+    const groupSets: Partial<Record<IntervalGroup, GroupSetResult>> = {};
+    if (aIntervals.length > 0) groupSets.A = { reps: spec.reps, distance: spec.distance, totalSeconds: aTotal };
+    if (bIntervals.length > 0) groupSets.B = bSet;
+
+    const allIntervals = [...aIntervals, ...bIntervals];
+    resolvedSets.push({ ...spec, intervals: allIntervals, groupSets });
 
     const placeholder = `[[PACE:${spec.key}]]`;
-    text = text.split(placeholder).join(inlineSummary(intervals, groupReps));
+    text = text.split(placeholder).join(inlineSummary(allIntervals, groupSets));
   }
 
   return { focus: practice.focus, text, paceSets: resolvedSets, source: practice.source };

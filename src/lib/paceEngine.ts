@@ -71,49 +71,49 @@ export function assignIntervalGroups(
   });
 }
 
-export type GroupRepsResult = {
+export function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
+export type GroupSetResult = {
   reps: number;
-  totalSeconds: number; // reps * this group's representative interval — the ACTUAL total, not assumed equal
+  distance: number; // yards per rep — the main lever we adjust per group
+  totalSeconds: number;
 };
 
 /**
- * Same total set time across groups, not the same rep count: a slower
- * group does fewer reps of the same distance rather than swimming the same
- * count on a more generous interval. `referenceReps` is the rep count as
- * written for the fastest (A) group; other groups' rep counts are rounded
- * to whichever whole number lands CLOSEST to A's total time — the goal is
- * both groups finishing together, not a guaranteed upper or lower bound.
- * Whole reps mean it won't always land exactly equal; callers should still
- * show each group's actual total (`totalSeconds`).
+ * Finds whichever (reps, distance) combination for a slower group lands
+ * CLOSEST to the faster group's total time — this is how the real coach this
+ * engine was built from actually scales a set by hand ("3 x 100s FR @ 1:25
+ * (B group 75/100/75)" from an uploaded example: distance shrinks before reps
+ * do). Reps are only reduced below the written count when no distance in the
+ * search range gets close enough on its own — distance is the first lever,
+ * reps the second, never the only one, since a handful of reps gives too few
+ * distance steps alone to land close at low rep counts.
  */
-export function repsPerGroup(
-  intervals: SwimmerInterval[],
-  referenceReps: number
-): Partial<Record<IntervalGroup, GroupRepsResult>> {
-  const byGroup: Record<IntervalGroup, number[]> = { A: [], B: [] };
-  for (const iv of intervals) byGroup[iv.group].push(iv.interval);
-
-  const median = (vals: number[]) => {
-    const sorted = [...vals].sort((a, b) => a - b);
-    const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-  };
-
-  const medians: Partial<Record<IntervalGroup, number>> = {};
-  for (const g of ["A", "B"] as const) {
-    if (byGroup[g].length > 0) medians[g] = median(byGroup[g]);
+export function bestSetForTarget(
+  refs: { seconds: number; distance: number }[],
+  setType: SetType,
+  referenceReps: number,
+  restSeconds: number,
+  targetTotalSeconds: number,
+  maxDistance: number
+): { reps: number; distance: number; totalSeconds: number } {
+  let best = { reps: referenceReps, distance: maxDistance, totalSeconds: 0 };
+  let bestDiff = Infinity;
+  const minReps = Math.max(1, referenceReps - 2);
+  for (let reps = referenceReps; reps >= minReps; reps--) {
+    for (let d = 25; d <= maxDistance; d += 5) {
+      const intervals = refs.map((r) => targetInterval(targetTimeForRepeat(r.seconds, r.distance, d, setType), restSeconds));
+      const total = reps * median(intervals);
+      const diff = Math.abs(total - targetTotalSeconds);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = { reps, distance: d, totalSeconds: total };
+      }
+    }
   }
-
-  // Total time is anchored on A; if nobody's in A, fall back to B.
-  const anchorGroup = (["A", "B"] as const).find((g) => medians[g] !== undefined);
-  const totalTime = anchorGroup ? referenceReps * medians[anchorGroup]! : 0;
-
-  const result: Partial<Record<IntervalGroup, GroupRepsResult>> = {};
-  for (const g of ["A", "B"] as const) {
-    const m = medians[g];
-    if (m === undefined) continue;
-    const reps = g === anchorGroup ? referenceReps : Math.max(1, Math.round(totalTime / m));
-    result[g] = { reps, totalSeconds: reps * m };
-  }
-  return result;
+  return best;
 }

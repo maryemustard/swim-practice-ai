@@ -53,8 +53,8 @@ export default async function PracticeDetailPage({
             <div key={i} className="rounded-lg border border-slate-200 bg-white p-5">
               <h3 className="font-medium text-sm">{set.label}</h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Reps scaled per group to bring total set time close together — integer rep counts mean it
-                won&apos;t always land exactly equal, so actual total time is shown per group.
+                Same rep count for every group — the slower group&apos;s distance per rep is shortened
+                instead, chosen so both groups land as close as possible to the same total time.
               </p>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full text-sm">
@@ -62,7 +62,7 @@ export default async function PracticeDetailPage({
                     <tr className="text-left text-slate-500 border-b border-slate-200">
                       <th className="py-1 pr-4">Swimmer</th>
                       <th className="py-1 pr-4">Group</th>
-                      <th className="py-1 pr-4">Reps</th>
+                      <th className="py-1 pr-4">Reps × Distance</th>
                       <th className="py-1 pr-4">Target</th>
                       <th className="py-1 pr-4">Interval</th>
                       <th className="py-1 pr-4">Set total</th>
@@ -73,7 +73,7 @@ export default async function PracticeDetailPage({
                       .slice()
                       .sort((a, b) => a.group.localeCompare(b.group) || a.targetTime - b.targetTime)
                       .map((iv) => {
-                        const g = set.groupReps[iv.group];
+                        const g = set.groupSets[iv.group];
                         return (
                           <tr key={iv.swimmerId} className="border-b border-slate-100 last:border-0">
                             <td className="py-1 pr-4">{iv.swimmerName}</td>
@@ -88,7 +88,7 @@ export default async function PracticeDetailPage({
                                 {iv.group}
                               </span>
                             </td>
-                            <td className="py-1 pr-4 text-slate-600">{g ? `${g.reps}x` : "—"}</td>
+                            <td className="py-1 pr-4 text-slate-600">{g ? `${g.reps}x${g.distance}` : "—"}</td>
                             <td className="py-1 pr-4 text-slate-600">{formatSeconds(iv.targetTime)}</td>
                             <td className="py-1 pr-4 text-slate-600">on {formatSeconds(iv.interval)}</td>
                             <td className="py-1 pr-4 text-slate-600">
