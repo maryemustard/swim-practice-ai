@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { deletePracticeAction } from "./actions";
+import { formatDateTime } from "@/lib/formatDate";
 
 export default async function PracticesLogPage() {
   const practices = await prisma.practice.findMany({
@@ -31,7 +32,7 @@ export default async function PracticesLogPage() {
               <tr key={p.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                 <td className="py-2 px-4">
                   <Link href={`/practices/${p.id}`} className="block">
-                    {new Date(p.createdAt).toLocaleString()}
+                    {formatDateTime(p.createdAt)}
                   </Link>
                 </td>
                 <td className="py-2 px-4">{p.group.name}</td>

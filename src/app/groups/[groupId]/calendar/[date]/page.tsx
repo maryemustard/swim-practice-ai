@@ -20,7 +20,11 @@ export default async function CalendarDayPage({
     orderBy: { createdAt: "asc" },
   });
 
+  // dayStart is UTC midnight standing in for the calendar date in the URL
+  // (not a real moment in time), so format it in UTC — converting to a local
+  // timezone here would shift it onto the wrong day.
   const prettyDate = dayStart.toLocaleDateString(undefined, {
+    timeZone: "UTC",
     weekday: "long",
     year: "numeric",
     month: "long",

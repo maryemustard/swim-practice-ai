@@ -32,7 +32,14 @@ export function monthParam(year: number, monthIndex: number): string {
 }
 
 export function monthLabel(year: number, monthIndex: number): string {
-  return new Date(year, monthIndex, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  // The Date here is a pure (year, month) pair standing in at local midnight
+  // on day 1, not a real moment in time — format it in UTC so a timezone
+  // offset can't shift day 1 back into the previous month's label.
+  return new Date(year, monthIndex, 1).toLocaleDateString(undefined, {
+    timeZone: "UTC",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 /** Full weeks covering the month, padded with adjacent-month days so the grid is always complete. */

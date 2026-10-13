@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { formatDate } from "@/lib/formatDate";
 
 export default async function HomePage() {
   const [groupCount, swimmerCount, practiceCount, upcomingMeets] = await Promise.all([
@@ -59,7 +60,7 @@ export default async function HomePage() {
                 <span>
                   {m.name} — <span className="text-slate-500">{m.group.name}</span>
                 </span>
-                <span className="text-slate-500">{new Date(m.date).toLocaleDateString()}</span>
+                <span className="text-slate-500">{formatDate(m.date)}</span>
               </Link>
             ))}
           </div>

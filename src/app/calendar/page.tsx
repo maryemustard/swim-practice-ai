@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { MonthCalendar, type CalendarEvent } from "@/components/MonthCalendar";
 import { dateKey, monthParam, parseMonthParam } from "@/lib/calendarMonth";
+import { formatDate } from "@/lib/formatDate";
 import { addTeamEventAction, deleteTeamEventAction } from "./actions";
 
 const TYPE_COLORS: Record<string, string> = {
@@ -92,7 +93,7 @@ export default async function TeamCalendarPage({ searchParams }: PageProps<"/cal
                   {e.type.replace("_", " ")}
                 </span>
                 <span className="font-medium">{e.name}</span>
-                <span className="text-slate-500 ml-2">{new Date(e.date).toLocaleDateString()}</span>
+                <span className="text-slate-500 ml-2">{formatDate(e.date)}</span>
                 {e.notes && <span className="text-slate-500 ml-2">— {e.notes}</span>}
               </div>
               <form action={deleteTeamEventAction}>

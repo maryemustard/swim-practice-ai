@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatRaceTime } from "@/lib/time";
+import { formatDate, formatDateTime } from "@/lib/formatDate";
 import { generatePracticeAction } from "./actions";
 
 export default async function GroupPage({ params }: PageProps<"/groups/[groupId]">) {
@@ -62,7 +63,7 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
         <section className="rounded-lg border border-slate-200 bg-white p-5">
           <h2 className="font-medium">Goal meet: {goalMeet.name}</h2>
           <p className="text-sm text-slate-600 mt-1">
-            {new Date(goalMeet.date).toLocaleDateString()} · {goalMeet.taperWeeks}-week taper
+            {formatDate(goalMeet.date)} · {goalMeet.taperWeeks}-week taper
           </p>
           {goalMeet.attendanceNotes && (
             <p className="text-sm text-slate-600 mt-2">{goalMeet.attendanceNotes}</p>
@@ -201,7 +202,7 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
               href={`/practices/${p.id}`}
               className="text-sm border border-slate-200 bg-white rounded px-3 py-2 hover:border-slate-400"
             >
-              {new Date(p.createdAt).toLocaleString()} — {p.focus} ({p.source})
+              {formatDateTime(p.createdAt)} — {p.focus} ({p.source})
             </Link>
           ))}
           {group.practices.length === 0 && (
