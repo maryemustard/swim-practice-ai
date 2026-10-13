@@ -1,4 +1,4 @@
-// Swim Practice AI — data model
+// Wavelength — data model
 // Every team-owned row hangs off Team so multi-team support later is additive.
 
 generator client {

@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Swim Practice AI",
-  description: "AI-generated swim practices, tuned to each group.",
+  title: "Wavelength",
+  description: "AI-generated swim practices, on the same wavelength as your coach.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -29,7 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <header className="relative bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600">
           <nav className="mx-auto max-w-5xl px-6 pt-4 pb-8 flex items-center gap-6">
             <Link href="/" className="font-semibold text-lg tracking-tight text-white flex items-center gap-1.5">
-              <span>🌊</span> Swim Practice AI
+              <span>🌊</span> Wavelength
             </Link>
             <Link href="/groups" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
               Groups

@@ -17,7 +17,7 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col gap-10">
       <div className="text-center py-6">
-        <h1 className="text-3xl font-semibold text-teal-900">🌊 Swim Practice AI</h1>
+        <h1 className="text-3xl font-semibold text-teal-900">🌊 Wavelength</h1>
         <p className="text-slate-600 mt-2 max-w-xl mx-auto">
           Practices generated in your coaches&apos; own voice, personalized to every swimmer&apos;s pace —
           built from the practices and times you already have.
