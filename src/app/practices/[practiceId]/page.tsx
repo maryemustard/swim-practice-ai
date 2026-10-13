@@ -54,8 +54,9 @@ export default async function PracticeDetailPage({
             <div key={i} className="rounded-lg border border-slate-200 bg-white p-5">
               <h3 className="font-medium text-sm">{set.label}</h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Same rep count for every group — the slower group&apos;s distance per rep is shortened
-                instead, chosen so both groups land as close as possible to the same total time.
+                Same rep count and the exact same interval for every group — the slower group&apos;s distance
+                per rep is shortened instead, so both groups go off the identical clock and finish in exactly
+                the same total time.
               </p>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full text-sm">

@@ -13,7 +13,7 @@ const OFFSET_SECONDS_PER_100: Record<SetType, number> = {
   sprint: 1,
   threshold: 4,
   aerobic: 9,
-  im: 6,
+  im: 15,
   kick: 12,
   drill: 15,
   recovery: 18,
@@ -71,49 +71,49 @@ export function assignIntervalGroups(
   });
 }
 
-export function median(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-}
-
 export type GroupSetResult = {
   reps: number;
   distance: number; // yards per rep — the main lever we adjust per group
+  interval: number; // the ONE send-off every swimmer in this group goes on
   totalSeconds: number;
 };
 
 /**
- * Finds whichever (reps, distance) combination for a slower group lands
- * CLOSEST to the faster group's total time — this is how the real coach this
- * engine was built from actually scales a set by hand ("3 x 100s FR @ 1:25
- * (B group 75/100/75)" from an uploaded example: distance shrinks before reps
- * do). Reps are only reduced below the written count when no distance in the
- * search range gets close enough on its own — distance is the first lever,
- * reps the second, never the only one, since a handful of reps gives too few
- * distance steps alone to land close at low rep counts.
+ * The single interval (send-off) for a group's set, based on its SLOWEST
+ * swimmer at this distance — the real number a coach would actually call out
+ * on deck, since everyone in the group has to be able to make it. Not a
+ * range, not a per-swimmer average: one number.
  */
-export function bestSetForTarget(
+export function groupInterval(
   refs: { seconds: number; distance: number }[],
   setType: SetType,
-  referenceReps: number,
+  distance: number,
+  restSeconds: number
+): number {
+  const intervals = refs.map((r) => targetInterval(targetTimeForRepeat(r.seconds, r.distance, distance, setType), restSeconds));
+  return Math.max(...intervals);
+}
+
+/**
+ * The longest swimmable distance (25-yard steps) a slower group can hold
+ * while still making a FIXED interval that was set by the faster group — so
+ * both groups go off the exact same send-off and finish in the exact same
+ * total time, same as the real coach's own convention ("200 FR swim @ 3:00,
+ * B-group 150"): one interval for the whole set, distance is the only thing
+ * that changes for the slower group.
+ */
+export function bestDistanceForInterval(
+  refs: { seconds: number; distance: number }[],
+  setType: SetType,
   restSeconds: number,
-  targetTotalSeconds: number,
+  interval: number,
   maxDistance: number
-): { reps: number; distance: number; totalSeconds: number } {
-  let best = { reps: referenceReps, distance: maxDistance, totalSeconds: 0 };
-  let bestDiff = Infinity;
-  const minReps = Math.max(1, referenceReps - 2);
-  for (let reps = referenceReps; reps >= minReps; reps--) {
-    for (let d = 25; d <= maxDistance; d += 25) {
-      const intervals = refs.map((r) => targetInterval(targetTimeForRepeat(r.seconds, r.distance, d, setType), restSeconds));
-      const total = reps * median(intervals);
-      const diff = Math.abs(total - targetTotalSeconds);
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        best = { reps, distance: d, totalSeconds: total };
-      }
-    }
+): number {
+  for (let d = maxDistance; d >= 25; d -= 25) {
+    const fits = refs.every(
+      (r) => targetInterval(targetTimeForRepeat(r.seconds, r.distance, d, setType), restSeconds) <= interval
+    );
+    if (fits) return d;
   }
-  return best;
+  return 25;
 }

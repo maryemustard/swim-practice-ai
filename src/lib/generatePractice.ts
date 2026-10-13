@@ -5,9 +5,9 @@ import {
   SetType,
   SwimmerInterval,
   assignIntervalGroups,
-  bestSetForTarget,
+  bestDistanceForInterval,
   formatSeconds,
-  median,
+  groupInterval,
   targetInterval,
   targetTimeForRepeat,
 } from "./paceEngine";
@@ -152,7 +152,7 @@ ${
 }
 Some parts of a practice are swum together as a group (warmup, pre-set, usually cooldown, often kick/drill) — write those with a normal fixed interval, same as the coach would. But for each part where swimmers should hold their OWN personalized pace (a real main set), do NOT invent one interval for everyone — instead write a placeholder token in the text like [[PACE:main1]] where the interval would go, and describe that set in the accompanying JSON so we can compute each swimmer's real interval and substitute it in.
 
-For those personalized main sets, write it the way this coach actually does: every group does the SAME number of reps (write that rep count, for the fastest group, as "reps" in the JSON) — the slower group's distance per rep gets shortened instead, computed and substituted in automatically so both groups land on close to the same total time. You don't need to work out the shortened distance yourself; just write the set for the fastest group normally and let the placeholder carry the rest.
+For those personalized main sets, write it the way this coach actually does: every group does the SAME number of reps on the exact SAME interval (write that rep count, for the fastest group, as "reps" in the JSON) — the slower group's distance per rep gets shortened instead, computed and substituted in automatically so both groups go off the identical clock and finish in the exact same total time. You don't need to work out the interval or the shortened distance yourself; just write the set for the fastest group normally and let the placeholder carry the rest.
 
 Make the main set carry real weight in the practice — matching the volume this coach's own examples actually use for a main set, not a token handful of reps.
 ${
@@ -220,19 +220,12 @@ export async function generatePractice(
   return claudeResult ?? templatePractice(focus);
 }
 
-function inlineSummary(intervals: SwimmerInterval[], groupSets: Partial<Record<IntervalGroup, GroupSetResult>>): string {
-  const groups: Record<IntervalGroup, number[]> = { A: [], B: [] };
-  for (const iv of intervals) groups[iv.group].push(iv.interval);
-
+function inlineSummary(groupSets: Partial<Record<IntervalGroup, GroupSetResult>>): string {
   const parts = (["A", "B"] as const)
-    .filter((g) => groups[g].length > 0 && groupSets[g])
+    .filter((g) => groupSets[g])
     .map((g) => {
-      const vals = groups[g];
-      const lo = Math.min(...vals);
-      const hi = Math.max(...vals);
-      const range = lo === hi ? formatSeconds(lo) : `${formatSeconds(lo)}-${formatSeconds(hi)}`;
-      const { reps, distance, totalSeconds } = groupSets[g]!;
-      return `${g}: ${reps}x${distance} on ${range} (~${formatSeconds(totalSeconds)} total)`;
+      const { reps, distance, interval, totalSeconds } = groupSets[g]!;
+      return `${g}: ${reps}x${distance} on ${formatSeconds(interval)} (~${formatSeconds(totalSeconds)} total)`;
     });
   return parts.length > 0 ? `(${parts.join(" · ")})` : "(no times on file)";
 }
@@ -242,11 +235,12 @@ function inlineSummary(intervals: SwimmerInterval[], groupSets: Partial<Record<I
  * and substitute a compact inline summary into the practice text so it reads
  * naturally in the coach's own voice with real numbers dropped in.
  *
- * Every group swims the SAME rep count (the whole point of this scaling —
- * everyone finishes together). The lever for a slower group is DISTANCE per
- * rep, searched in 25-yard steps to land as close as possible to the fastest
- * group's total time, same as how the real coach this was built from scales
- * a set by hand ("B group 75/100/75" against an "A" written as 100s).
+ * Both groups go off the exact same interval and swim the exact same rep
+ * count, so their total time is EXACTLY equal, not just close — the interval
+ * is set by A's slowest swimmer, and B's only lever is swimming a shorter,
+ * still-realistic (25-yard-step) distance that its slowest swimmer can
+ * actually hold on that same clock. This is the real coach's own convention
+ * ("200 FR swim @ 3:00, B-group 150"): one interval for the whole set.
  */
 export function resolvePractice(group: GroupForGeneration, practice: GeneratedPractice): ResolvedPractice {
   const resolvedSets: ResolvedPaceSet[] = [];
@@ -270,42 +264,33 @@ export function resolvePractice(group: GroupForGeneration, practice: GeneratedPr
     const aRefs = swimmersWithRef.filter((s) => groupOf.get(s.id) === "A");
     const bRefs = swimmersWithRef.filter((s) => groupOf.get(s.id) === "B");
 
-    const buildIntervals = (
-      refs: typeof swimmersWithRef,
-      distance: number,
-      g: IntervalGroup
-    ): SwimmerInterval[] =>
-      refs.map((s) => {
-        const targetTime = targetTimeForRepeat(s.ref.seconds, s.ref.distance, distance, spec.setType);
-        return { swimmerId: s.id, swimmerName: s.name, targetTime, interval: targetInterval(targetTime, REST_SECONDS), group: g };
-      });
+    const groupSets: Partial<Record<IntervalGroup, GroupSetResult>> = {};
+    const allIntervals: SwimmerInterval[] = [];
 
-    const aIntervals = buildIntervals(aRefs, spec.distance, "A");
-    const aTotal = aIntervals.length > 0 ? spec.reps * median(aIntervals.map((x) => x.interval)) : 0;
-
-    let bSet = { reps: spec.reps, distance: spec.distance, totalSeconds: 0 };
-    let bIntervals: SwimmerInterval[] = [];
-    if (bRefs.length > 0) {
-      bSet = bestSetForTarget(
-        bRefs.map((s) => s.ref),
-        spec.setType,
-        spec.reps,
-        REST_SECONDS,
-        aTotal,
-        spec.distance
-      );
-      bIntervals = buildIntervals(bRefs, bSet.distance, "B");
+    if (aRefs.length > 0) {
+      const interval = groupInterval(aRefs.map((s) => s.ref), spec.setType, spec.distance, REST_SECONDS);
+      for (const s of aRefs) {
+        const targetTime = targetTimeForRepeat(s.ref.seconds, s.ref.distance, spec.distance, spec.setType);
+        allIntervals.push({ swimmerId: s.id, swimmerName: s.name, targetTime, interval, group: "A" });
+      }
+      groupSets.A = { reps: spec.reps, distance: spec.distance, interval, totalSeconds: spec.reps * interval };
     }
 
-    const groupSets: Partial<Record<IntervalGroup, GroupSetResult>> = {};
-    if (aIntervals.length > 0) groupSets.A = { reps: spec.reps, distance: spec.distance, totalSeconds: aTotal };
-    if (bIntervals.length > 0) groupSets.B = bSet;
+    if (bRefs.length > 0) {
+      // B goes off the exact same interval as A — same clock, not its own.
+      const interval = groupSets.A?.interval ?? groupInterval(bRefs.map((s) => s.ref), spec.setType, spec.distance, REST_SECONDS);
+      const distance = bestDistanceForInterval(bRefs.map((s) => s.ref), spec.setType, REST_SECONDS, interval, spec.distance);
+      for (const s of bRefs) {
+        const targetTime = targetTimeForRepeat(s.ref.seconds, s.ref.distance, distance, spec.setType);
+        allIntervals.push({ swimmerId: s.id, swimmerName: s.name, targetTime, interval, group: "B" });
+      }
+      groupSets.B = { reps: spec.reps, distance, interval, totalSeconds: spec.reps * interval };
+    }
 
-    const allIntervals = [...aIntervals, ...bIntervals];
     resolvedSets.push({ ...spec, intervals: allIntervals, groupSets });
 
     const placeholder = `[[PACE:${spec.key}]]`;
-    text = text.split(placeholder).join(inlineSummary(allIntervals, groupSets));
+    text = text.split(placeholder).join(inlineSummary(groupSets));
   }
 
   return { focus: practice.focus, text, paceSets: resolvedSets, source: practice.source };
