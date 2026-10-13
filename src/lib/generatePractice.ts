@@ -72,6 +72,22 @@ function referenceTimeFor(swimmer: GroupForGeneration["swimmers"][number]) {
   return any ? { seconds: any.seconds, distance: 100 } : null;
 }
 
+/**
+ * Coaches who annotate practices with cumulative time in parentheses — "(8)",
+ * "(28)", "(84)" — give us a free signal for how long their practices
+ * actually run. Take the largest such number in each example (its final
+ * total) and average across examples; null if no example uses the convention.
+ */
+function estimateTargetMinutes(styleExamples: { content: string }[]): number | null {
+  const totals: number[] = [];
+  for (const ex of styleExamples) {
+    const matches = [...ex.content.matchAll(/\((\d{1,3})\)/g)].map((m) => Number(m[1]));
+    if (matches.length > 0) totals.push(Math.max(...matches));
+  }
+  if (totals.length === 0) return null;
+  return Math.round(totals.reduce((a, b) => a + b, 0) / totals.length);
+}
+
 // --- Deterministic fallback used when no ANTHROPIC_API_KEY is configured ---
 function templatePractice(focus: string): GeneratedPractice {
   const focusKey = focus.toLowerCase();
@@ -110,6 +126,7 @@ async function claudePractice(group: GroupForGeneration, focus: string): Promise
     .map((s) => `### ${s.title}\n${s.content}`)
     .join("\n\n");
   const drillText = group.drills.map((d) => `- ${d.name}: ${d.definition}`).join("\n");
+  const targetMinutes = estimateTargetMinutes(group.styleExamples);
 
   const prompt = `You write swim practices for a specific coach and group. Write the practice EXACTLY the way this coach writes theirs — same notation, same structure (e.g. "Then go X times through" blocks if they use that), same abbreviations and drill names, same level of terseness. Do not reformat it into a generic list — copy their voice.
 
@@ -126,6 +143,11 @@ ${drillText || "(none provided yet)"}
 Some parts of a practice are swum together as a group (warmup, pre-set, usually cooldown, often kick/drill) — write those with a normal fixed interval, same as the coach would. But for each part where swimmers should hold their OWN personalized pace (a real main set), do NOT invent one interval for everyone — instead write a placeholder token in the text like [[PACE:main1]] where the interval would go, and describe that set in the accompanying JSON so we can compute each swimmer's real interval and substitute it in.
 
 For those personalized main sets, this team's coaches scale the WORK, not just the rest: a slower group does fewer reps of the same distance so the whole set takes about the same total time as the faster group, rather than everyone doing the same reps with slower swimmers just getting more rest. Write the rep count in the text as if for the fastest group, and report that same number as "reps" in the JSON — the actual per-group rep counts (fewer for slower groups, same total time) get computed and substituted in along with the pace.
+${
+  targetMinutes
+    ? `\nThis coach's own practices run about ${targetMinutes} minutes total (based on the cumulative-time numbers in parentheses in their examples above). Match that total length — do not stop short after one or two sets. If you use the same running-total-in-parentheses convention they do, keep it correct and strictly increasing to the end, consistent with a ${targetMinutes}-minute practice.`
+    : ""
+}
 
 Respond in EXACTLY this format, nothing else:
 
