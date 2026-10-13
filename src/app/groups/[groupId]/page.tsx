@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { formatRaceTime } from "@/lib/time";
 import { formatDate, formatDateTime } from "@/lib/formatDate";
 import { generatePracticeAction, updatePreferencesAction } from "./actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function GroupPage({ params }: PageProps<"/groups/[groupId]">) {
   const { groupId } = await params;
@@ -157,9 +158,9 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5">
-        <h2 className="font-medium mb-1">🎓 Train the generator</h2>
-        <p className="text-xs text-slate-500 mb-3">
+      <section className="rounded-xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-50 to-violet-50 p-5">
+        <h2 className="font-semibold mb-1 text-indigo-900 text-base">🎓 Train the generator</h2>
+        <p className="text-xs text-slate-600 mb-3">
           Tell it in plain English how to adjust practices for this group — tone, which drills go with which
           stroke, how hard the main set should be, anything. It&apos;s read every time a practice is generated
           for {group.name}, so you can correct it yourself without asking a developer to change code.
@@ -171,14 +172,14 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
             rows={4}
             placeholder={`e.g. "Backstroke and breaststroke each have their own drills — never reuse a backstroke drill in a breaststroke set." Or "Main sets should be harder — match the volume in my Thursday - Sprints example, not a token handful of reps."`}
             defaultValue={group.preferences ?? ""}
-            className="border border-slate-300 rounded px-3 py-2 text-sm w-full"
+            className="border border-indigo-200 bg-white rounded px-3 py-2 text-sm w-full"
           />
-          <button
-            type="submit"
-            className="self-start bg-slate-800 text-white text-sm rounded-full px-4 py-1.5 hover:bg-slate-900 transition-colors"
+          <SubmitButton
+            pendingText="Saving…"
+            className="self-start bg-indigo-700 text-white text-sm font-medium rounded-full px-4 py-1.5 hover:bg-indigo-800 transition-colors"
           >
             Save instructions
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -189,7 +190,9 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
           <Link href={`/groups/${group.id}/calendar`} className="text-teal-700 hover:text-teal-900 underline">
             Use the Calendar
           </Link>{" "}
-          to generate or paste in a practice for a specific future day.
+          to generate or paste in a practice for a specific future day. Generating calls Claude and takes
+          10-20 seconds — the button will say &quot;Generating…&quot; and disable itself until it&apos;s done,
+          so it&apos;s safe to wait instead of clicking again.
         </p>
         <form action={generatePracticeAction} className="flex flex-wrap gap-3 items-end">
           <input type="hidden" name="groupId" value={group.id} />
@@ -202,9 +205,12 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
               defaultValue="aerobic base"
             />
           </div>
-          <button type="submit" className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors">
+          <SubmitButton
+            pendingText="Generating…"
+            className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors"
+          >
             Generate practice
-          </button>
+          </SubmitButton>
         </form>
         {!process.env.ANTHROPIC_API_KEY && (
           <p className="text-xs text-slate-500 mt-2">

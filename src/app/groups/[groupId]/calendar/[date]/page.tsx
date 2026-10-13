@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { addManualPracticeAction, generatePracticeAction } from "../../actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function CalendarDayPage({
   params,
@@ -71,9 +72,12 @@ export default async function CalendarDayPage({
               defaultValue="aerobic base"
             />
           </div>
-          <button type="submit" className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors">
+          <SubmitButton
+            pendingText="Generating…"
+            className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors"
+          >
             Generate practice
-          </button>
+          </SubmitButton>
         </form>
         {!process.env.ANTHROPIC_API_KEY && (
           <p className="text-xs text-slate-500 mt-2">
