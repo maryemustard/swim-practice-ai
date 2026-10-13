@@ -84,25 +84,10 @@ function referenceTimeFor(swimmer: GroupForGeneration["swimmers"][number]) {
 const COOLDOWN_MINUTES = 4;
 
 /**
- * Coaches who annotate practices with cumulative time in parentheses — "(8)",
- * "(28)", "(84)" — give us a free signal for how long their practices
- * actually run. Take the largest such number in each example (its final
- * total) and average across examples; null if no example uses the convention.
- */
-function estimateTargetMinutes(styleExamples: { content: string }[]): number | null {
-  const totals: number[] = [];
-  for (const ex of styleExamples) {
-    const matches = [...ex.content.matchAll(/\((\d{1,3})\)/g)].map((m) => Number(m[1]));
-    if (matches.length > 0) totals.push(Math.max(...matches));
-  }
-  if (totals.length === 0) return null;
-  return Math.round(totals.reduce((a, b) => a + b, 0) / totals.length);
-}
-
-/**
- * A one-time note can name an explicit length ("120 minutes", "2 hour
- * practice") that should override the examples-derived default for just
- * this generation. Minutes and hours only — no vague phrases.
+ * There is no default practice length unless the coach actually set one —
+ * either for just today (the one-time note) or as a standing rule (Train the
+ * generator). Minutes and hours only — no vague phrases, and no inferring a
+ * length from how long past uploaded examples happen to run.
  */
 function parseDurationMinutes(note: string): number | null {
   const hourMatch = note.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/i);
@@ -175,14 +160,14 @@ async function claudePractice(
     .map((s) => `### ${s.title}\n${s.content}`)
     .join("\n\n");
   const drillText = group.drills.map((d) => `- ${d.name}: ${d.definition}`).join("\n");
-  const examplesTargetMinutes = estimateTargetMinutes(group.styleExamples);
+  // Length only comes from something the coach actually said: a one-time
+  // note for today, or a standing instruction trained in. Today's note wins
+  // when both are present. No length is enforced otherwise.
   const notedMinutes = todayNote ? parseDurationMinutes(todayNote) : null;
-  // What Claude should fill with actual content (before cooldown) vs. the
-  // real final number the practice must end on (content + cooldown). A
-  // coach-specified length for today overrides the examples-derived default.
-  const mainContentMinutes = notedMinutes !== null ? Math.max(notedMinutes - COOLDOWN_MINUTES, 1) : examplesTargetMinutes;
-  const finalTotal =
-    notedMinutes !== null ? notedMinutes : examplesTargetMinutes !== null ? examplesTargetMinutes + COOLDOWN_MINUTES : null;
+  const standingMinutes = notedMinutes === null && group.preferences ? parseDurationMinutes(group.preferences) : null;
+  const explicitTotal = notedMinutes ?? standingMinutes;
+  const mainContentMinutes = explicitTotal !== null ? Math.max(explicitTotal - COOLDOWN_MINUTES, 1) : null;
+  const finalTotal = explicitTotal;
 
   const prompt = `You write swim practices for a specific coach and group. Write the practice EXACTLY the way this coach writes theirs — same notation, same structure (e.g. "Then go X times through" blocks if they use that), same abbreviations, same level of terseness. Do not reformat it into a generic list — copy their voice.
 
@@ -213,11 +198,13 @@ For those personalized main sets, write it the way this coach actually does: eve
 
 Make the main set carry real weight in the practice — matching the volume this coach's own examples actually use for a main set, not a token handful of reps.
 ${
-  notedMinutes !== null
-    ? `\nThe coach asked for a ${notedMinutes}-minute practice today specifically (see "SOMETHING SPECIFIC FOR TODAY ONLY" above) — that overrides their usual length. Write enough real content (warmup through the last main set, before cooldown) to fill about ${mainContentMinutes} minutes, then a cooldown, with the running-total-in-parentheses convention continuing through the cooldown and ending at (${finalTotal}) on the very last line. Do not stop short.`
-    : mainContentMinutes
-      ? `\nThis coach's own examples number their running total up to about ${mainContentMinutes} minutes (based on the cumulative-time numbers in parentheses in their examples above), but that's where THEIR notation stops counting, not where practice actually ends — their cooldown after that point is real time too. The practice you write must keep the running-total-in-parentheses convention going THROUGH the cooldown, ending at (${finalTotal}) on the very last line, not stopping at (${mainContentMinutes}). Do not stop short after one or two sets, and do not leave the cooldown untimed — give it its own final number.`
-      : ""
+  explicitTotal !== null
+    ? `\n${
+        notedMinutes !== null
+          ? `The coach asked for a ${notedMinutes}-minute practice today specifically (see "SOMETHING SPECIFIC FOR TODAY ONLY" above) — that overrides anything else.`
+          : `This coach's standing instructions call for a ${standingMinutes}-minute practice.`
+      } Write enough real content (warmup through the last main set, before cooldown) to fill about ${mainContentMinutes} minutes, then a cooldown, with the running-total-in-parentheses convention (if this coach's own examples use it) continuing through the cooldown and ending at (${finalTotal}) on the very last line. Do not stop short.`
+    : ""
 }
 
 Respond in EXACTLY this format, nothing else:
