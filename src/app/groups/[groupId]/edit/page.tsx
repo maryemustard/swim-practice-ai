@@ -77,3 +77,5 @@ export default async function EditGroupPage({ params }: PageProps<"/groups/[grou
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";

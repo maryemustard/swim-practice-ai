@@ -154,3 +154,5 @@ Milo Nguyen,M,100 IM,current,1:09.20`}
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";

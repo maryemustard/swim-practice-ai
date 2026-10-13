@@ -114,3 +114,5 @@ export default async function PracticeDetailPage({
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";

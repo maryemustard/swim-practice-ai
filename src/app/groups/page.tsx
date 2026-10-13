@@ -70,3 +70,5 @@ export default async function GroupsPage() {
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";

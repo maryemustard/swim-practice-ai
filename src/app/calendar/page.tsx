@@ -109,3 +109,5 @@ export default async function TeamCalendarPage({ searchParams }: PageProps<"/cal
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";

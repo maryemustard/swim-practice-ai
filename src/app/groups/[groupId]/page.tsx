@@ -193,3 +193,5 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";

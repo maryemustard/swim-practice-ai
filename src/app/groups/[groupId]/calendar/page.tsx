@@ -76,3 +76,5 @@ export default async function GroupCalendarPage({
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";
