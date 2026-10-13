@@ -115,7 +115,19 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5">
-        <h2 className="font-medium mb-3">Style examples</h2>
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-medium">Style examples</h2>
+          <Link
+            href={`/groups/${group.id}/upload`}
+            className="text-xs text-teal-700 hover:text-teal-900 whitespace-nowrap"
+          >
+            + Upload a practice
+          </Link>
+        </div>
+        <p className="text-xs text-slate-500 mb-3">
+          Past practices this coach actually wrote — these teach the AI their voice. They&apos;re
+          reference material, not scheduled on any specific day.
+        </p>
         <div className="flex flex-col gap-3">
           {group.styleExamples.map((ex) => (
             <details key={ex.id} className="border border-slate-100 rounded p-3">
@@ -125,8 +137,8 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
           ))}
           {group.styleExamples.length === 0 && (
             <p className="text-slate-500 text-sm">
-              No style examples yet — add a couple of past practices on the Upload page so generated
-              practices match this group&apos;s usual structure.
+              No style examples yet — click &quot;Upload a practice&quot; above and paste in a couple of
+              past practices so generated ones match this group&apos;s usual structure.
             </p>
           )}
         </div>
@@ -145,7 +157,14 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
       </section>
 
       <section className="rounded-xl border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-5">
-        <h2 className="font-medium mb-3 text-teal-900">🏊 Generate a practice</h2>
+        <h2 className="font-medium mb-1 text-teal-900">🏊 Generate a practice for today</h2>
+        <p className="text-xs text-slate-500 mb-3">
+          This generates for today&apos;s date. Planning ahead?{" "}
+          <Link href={`/groups/${group.id}/calendar`} className="text-teal-700 hover:text-teal-900 underline">
+            Use the Calendar
+          </Link>{" "}
+          to generate or paste in a practice for a specific future day.
+        </p>
         <form action={generatePracticeAction} className="flex flex-wrap gap-3 items-end">
           <input type="hidden" name="groupId" value={group.id} />
           <div className="flex flex-col gap-1">

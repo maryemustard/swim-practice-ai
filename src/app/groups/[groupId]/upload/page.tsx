@@ -92,11 +92,16 @@ Milo Nguyen,M,100 IM,current,1:09.20`}
         </form>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5">
-        <h2 className="font-medium mb-3">Add a style-example practice</h2>
+      <section className="rounded-lg border border-teal-200 bg-teal-50/30 p-5">
+        <h2 className="font-medium mb-1">📋 Upload a practice (style example)</h2>
         <p className="text-sm text-slate-600 mb-3">
-          Paste a real past practice for this group. 2+ examples give the generator a real feel for how
-          this coach structures a session.
+          Paste a real past practice for this group — this is the main thing that makes generated
+          practices sound like this coach. 2+ examples give the generator a real feel for their structure.
+          This is reference material only, not scheduled on a specific day — for that, use the{" "}
+          <a href={`/groups/${group.id}/calendar`} className="text-teal-700 hover:text-teal-900 underline">
+            group&apos;s Calendar
+          </a>{" "}
+          instead.
         </p>
         <form action={addStyleExampleAction} className="flex flex-col gap-3">
           <input type="hidden" name="groupId" value={group.id} />
