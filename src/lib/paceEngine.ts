@@ -105,7 +105,7 @@ export function bestSetForTarget(
   let bestDiff = Infinity;
   const minReps = Math.max(1, referenceReps - 2);
   for (let reps = referenceReps; reps >= minReps; reps--) {
-    for (let d = 25; d <= maxDistance; d += 5) {
+    for (let d = 25; d <= maxDistance; d += 25) {
       const intervals = refs.map((r) => targetInterval(targetTimeForRepeat(r.seconds, r.distance, d, setType), restSeconds));
       const total = reps * median(intervals);
       const diff = Math.abs(total - targetTotalSeconds);
