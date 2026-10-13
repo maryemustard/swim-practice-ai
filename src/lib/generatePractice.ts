@@ -131,7 +131,9 @@ async function claudePractice(group: GroupForGeneration, focus: string): Promise
   const drillText = group.drills.map((d) => `- ${d.name}: ${d.definition}`).join("\n");
   const targetMinutes = estimateTargetMinutes(group.styleExamples);
 
-  const prompt = `You write swim practices for a specific coach and group. Write the practice EXACTLY the way this coach writes theirs — same notation, same structure (e.g. "Then go X times through" blocks if they use that), same abbreviations and drill names, same level of terseness. Do not reformat it into a generic list — copy their voice.
+  const prompt = `You write swim practices for a specific coach and group. Write the practice EXACTLY the way this coach writes theirs — same notation, same structure (e.g. "Then go X times through" blocks if they use that), same abbreviations, same level of terseness. Do not reformat it into a generic list — copy their voice.
+
+IMPORTANT — drills are specific to the stroke they're normally done in (e.g. "teacup drill", "kick switch", and "single arm" are backstroke drills; they are not breaststroke, fly, or free drills). If today's focus uses a different stroke than one of the example practices below, copy that example's STRUCTURE, NOTATION, and VOICE, but do NOT carry over its stroke-specific drill names onto a different stroke. Only use a drill name if it's actually correct for the stroke you're writing it for — pull from this coach's drill vocabulary below when it has an entry for that stroke, or fall back to a generic, stroke-agnostic cue (catch-up, scull, closed-fist, high elbow) rather than guessing or reusing a drill from the wrong stroke.
 
 GROUP: ${group.name}${group.ageRange ? ` (ages ${group.ageRange})` : ""}
 TARGET STANDARD: ${group.targetStandard ?? "not specified"}
