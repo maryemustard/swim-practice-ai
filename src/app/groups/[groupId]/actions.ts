@@ -125,6 +125,24 @@ export async function clearPreferencesAction(formData: FormData) {
   redirect(`/groups/${groupId}#train`);
 }
 
+// Removes ONE learned instruction by its position in the list, leaving the
+// rest intact — so a bad or outdated correction doesn't force clearing
+// everything the generator has been taught.
+export async function removePreferenceAction(formData: FormData) {
+  const groupId = String(formData.get("groupId") ?? "");
+  const index = Number(formData.get("index"));
+  if (!groupId || !Number.isInteger(index) || index < 0) return;
+
+  const group = await prisma.group.findUniqueOrThrow({ where: { id: groupId }, select: { preferences: true } });
+  const lines = (group.preferences ?? "").split("\n").filter((l) => l.trim().length > 0);
+  lines.splice(index, 1);
+  const preferences = lines.length > 0 ? lines.join("\n") : null;
+
+  await prisma.group.update({ where: { id: groupId }, data: { preferences } });
+  revalidatePath(`/groups/${groupId}`);
+  redirect(`/groups/${groupId}#train`);
+}
+
 export async function addDrillAction(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "");
   const name = String(formData.get("name") ?? "").trim();

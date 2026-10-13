@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatRaceTime } from "@/lib/time";
 import { formatDate, formatDateTime } from "@/lib/formatDate";
-import { addPreferenceAction, clearPreferencesAction, generatePracticeAction } from "./actions";
+import { addPreferenceAction, clearPreferencesAction, generatePracticeAction, removePreferenceAction } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function GroupPage({ params, searchParams }: PageProps<"/groups/[groupId]">) {
@@ -190,10 +190,31 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
             <summary className="text-xs text-indigo-700 hover:text-indigo-900 cursor-pointer w-fit">
               What has it learned so far?
             </summary>
-            <pre className="text-xs text-slate-600 whitespace-pre-wrap bg-white/70 border border-indigo-100 rounded p-2 mt-2">
-              {group.preferences}
-            </pre>
-            <form action={clearPreferencesAction} className="mt-1">
+            <ul className="flex flex-col gap-1 mt-2">
+              {group.preferences
+                .split("\n")
+                .filter((line) => line.trim().length > 0)
+                .map((line, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start justify-between gap-2 text-xs text-slate-600 bg-white/70 border border-indigo-100 rounded px-2 py-1.5"
+                  >
+                    <span className="flex-1">{line.replace(/^- /, "")}</span>
+                    <form action={removePreferenceAction}>
+                      <input type="hidden" name="groupId" value={group.id} />
+                      <input type="hidden" name="index" value={i} />
+                      <button
+                        type="submit"
+                        title="Remove this instruction"
+                        className="text-red-500 hover:text-red-700 leading-none shrink-0"
+                      >
+                        ✕
+                      </button>
+                    </form>
+                  </li>
+                ))}
+            </ul>
+            <form action={clearPreferencesAction} className="mt-2">
               <input type="hidden" name="groupId" value={group.id} />
               <button type="submit" className="text-xs text-red-600 hover:text-red-800 underline">
                 Clear all instructions
