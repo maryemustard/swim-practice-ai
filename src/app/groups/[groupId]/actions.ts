@@ -107,6 +107,7 @@ export async function updatePreferencesAction(formData: FormData) {
 
   await prisma.group.update({ where: { id: groupId }, data: { preferences } });
   revalidatePath(`/groups/${groupId}`);
+  redirect(`/groups/${groupId}?saved=preferences#train`);
 }
 
 export async function addDrillAction(formData: FormData) {

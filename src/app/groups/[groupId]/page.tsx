@@ -6,8 +6,9 @@ import { formatDate, formatDateTime } from "@/lib/formatDate";
 import { generatePracticeAction, updatePreferencesAction } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
 
-export default async function GroupPage({ params }: PageProps<"/groups/[groupId]">) {
+export default async function GroupPage({ params, searchParams }: PageProps<"/groups/[groupId]">) {
   const { groupId } = await params;
+  const { saved } = await searchParams;
 
   const group = await prisma.group.findUnique({
     where: { id: groupId },
@@ -158,13 +159,18 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
         </div>
       </section>
 
-      <section className="rounded-xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-50 to-violet-50 p-5">
+      <section id="train" className="rounded-xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-50 to-violet-50 p-5">
         <h2 className="font-semibold mb-1 text-indigo-900 text-base">🎓 Train the generator</h2>
         <p className="text-xs text-slate-600 mb-3">
           Tell it in plain English how to adjust practices for this group — tone, which drills go with which
           stroke, how hard the main set should be, anything. It&apos;s read every time a practice is generated
           for {group.name}, so you can correct it yourself without asking a developer to change code.
         </p>
+        {saved === "preferences" && (
+          <p className="text-sm text-green-800 bg-green-100 border border-green-300 rounded-lg px-3 py-2 mb-3">
+            ✓ Saved — the next practice generated for {group.name} will follow these instructions.
+          </p>
+        )}
         <form action={updatePreferencesAction} className="flex flex-col gap-2">
           <input type="hidden" name="groupId" value={group.id} />
           <textarea
