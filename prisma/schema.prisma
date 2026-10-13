@@ -25,6 +25,10 @@ model Group {
   name           String
   ageRange       String?
   targetStandard String? // e.g. "100 free pacing on 1:20 by March"
+  // Freeform coaching instructions the coach writes/edits themselves and that
+  // feed straight into every generation prompt — how they steer the AI
+  // without a developer changing code (tone, drill rules, set volume, etc).
+  preferences    String?
 
   swimmers      Swimmer[]
   styleExamples StyleExample[]

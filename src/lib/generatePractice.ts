@@ -38,6 +38,7 @@ export type GroupForGeneration = {
   name: string;
   ageRange: string | null;
   targetStandard: string | null;
+  preferences?: string | null;
   styleExamples: { title: string; content: string }[];
   drills: { name: string; definition: string }[];
   swimmers: {
@@ -144,7 +145,11 @@ ${styleText || "(none provided yet — write a reasonable generic practice for t
 
 THIS COACH'S DRILL VOCABULARY:
 ${drillText || "(none provided yet)"}
-
+${
+  group.preferences?.trim()
+    ? `\nSTANDING INSTRUCTIONS FROM THIS COACH (they wrote these themselves to steer how you generate for this group — follow them even where they override the general guidance above):\n${group.preferences.trim()}\n`
+    : ""
+}
 Some parts of a practice are swum together as a group (warmup, pre-set, usually cooldown, often kick/drill) — write those with a normal fixed interval, same as the coach would. But for each part where swimmers should hold their OWN personalized pace (a real main set), do NOT invent one interval for everyone — instead write a placeholder token in the text like [[PACE:main1]] where the interval would go, and describe that set in the accompanying JSON so we can compute each swimmer's real interval and substitute it in.
 
 For those personalized main sets, write it the way this coach actually does: every group does the SAME number of reps (write that rep count, for the fastest group, as "reps" in the JSON) — the slower group's distance per rep gets shortened instead, computed and substituted in automatically so both groups land on close to the same total time. You don't need to work out the shortened distance yourself; just write the set for the fastest group normally and let the placeholder carry the rest.

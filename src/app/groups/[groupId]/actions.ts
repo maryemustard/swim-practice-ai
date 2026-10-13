@@ -100,6 +100,15 @@ export async function addGoalMeetAction(formData: FormData) {
   revalidatePath(`/groups/${groupId}/upload`);
 }
 
+export async function updatePreferencesAction(formData: FormData) {
+  const groupId = String(formData.get("groupId") ?? "");
+  const preferences = String(formData.get("preferences") ?? "").trim() || null;
+  if (!groupId) return;
+
+  await prisma.group.update({ where: { id: groupId }, data: { preferences } });
+  revalidatePath(`/groups/${groupId}`);
+}
+
 export async function addDrillAction(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "");
   const name = String(formData.get("name") ?? "").trim();

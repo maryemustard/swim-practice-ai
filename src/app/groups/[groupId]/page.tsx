@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatRaceTime } from "@/lib/time";
 import { formatDate, formatDateTime } from "@/lib/formatDate";
-import { generatePracticeAction } from "./actions";
+import { generatePracticeAction, updatePreferencesAction } from "./actions";
 
 export default async function GroupPage({ params }: PageProps<"/groups/[groupId]">) {
   const { groupId } = await params;
@@ -155,6 +155,31 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
           ))}
           {group.drills.length === 0 && <p className="text-slate-500">No drills defined yet.</p>}
         </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5">
+        <h2 className="font-medium mb-1">🎓 Train the generator</h2>
+        <p className="text-xs text-slate-500 mb-3">
+          Tell it in plain English how to adjust practices for this group — tone, which drills go with which
+          stroke, how hard the main set should be, anything. It&apos;s read every time a practice is generated
+          for {group.name}, so you can correct it yourself without asking a developer to change code.
+        </p>
+        <form action={updatePreferencesAction} className="flex flex-col gap-2">
+          <input type="hidden" name="groupId" value={group.id} />
+          <textarea
+            name="preferences"
+            rows={4}
+            placeholder={`e.g. "Backstroke and breaststroke each have their own drills — never reuse a backstroke drill in a breaststroke set." Or "Main sets should be harder — match the volume in my Thursday - Sprints example, not a token handful of reps."`}
+            defaultValue={group.preferences ?? ""}
+            className="border border-slate-300 rounded px-3 py-2 text-sm w-full"
+          />
+          <button
+            type="submit"
+            className="self-start bg-slate-800 text-white text-sm rounded-full px-4 py-1.5 hover:bg-slate-900 transition-colors"
+          >
+            Save instructions
+          </button>
+        </form>
       </section>
 
       <section className="rounded-xl border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-5">
