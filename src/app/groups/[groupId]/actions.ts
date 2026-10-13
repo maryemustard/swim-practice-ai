@@ -100,14 +100,29 @@ export async function addGoalMeetAction(formData: FormData) {
   revalidatePath(`/groups/${groupId}/upload`);
 }
 
-export async function updatePreferencesAction(formData: FormData) {
+// Each call teaches the generator ONE more thing — appended to whatever it's
+// already learned, not a block of text the coach has to keep looking at.
+// The input that calls this is always blank; this is what makes it "go away."
+export async function addPreferenceAction(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "");
-  const preferences = String(formData.get("preferences") ?? "").trim() || null;
-  if (!groupId) return;
+  const instruction = String(formData.get("instruction") ?? "").trim();
+  if (!groupId || !instruction) return;
+
+  const group = await prisma.group.findUniqueOrThrow({ where: { id: groupId }, select: { preferences: true } });
+  const preferences = group.preferences ? `${group.preferences}\n- ${instruction}` : `- ${instruction}`;
 
   await prisma.group.update({ where: { id: groupId }, data: { preferences } });
   revalidatePath(`/groups/${groupId}`);
   redirect(`/groups/${groupId}?saved=preferences#train`);
+}
+
+export async function clearPreferencesAction(formData: FormData) {
+  const groupId = String(formData.get("groupId") ?? "");
+  if (!groupId) return;
+
+  await prisma.group.update({ where: { id: groupId }, data: { preferences: null } });
+  revalidatePath(`/groups/${groupId}`);
+  redirect(`/groups/${groupId}#train`);
 }
 
 export async function addDrillAction(formData: FormData) {

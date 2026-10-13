@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatRaceTime } from "@/lib/time";
 import { formatDate, formatDateTime } from "@/lib/formatDate";
-import { generatePracticeAction, updatePreferencesAction } from "./actions";
+import { addPreferenceAction, clearPreferencesAction, generatePracticeAction } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function GroupPage({ params, searchParams }: PageProps<"/groups/[groupId]">) {
@@ -162,31 +162,45 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
       <section id="train" className="rounded-xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-50 to-violet-50 p-5">
         <h2 className="font-semibold mb-1 text-indigo-900 text-base">🎓 Train the generator</h2>
         <p className="text-xs text-slate-600 mb-3">
-          Tell it in plain English how to adjust practices for this group — tone, which drills go with which
-          stroke, how hard the main set should be, anything. It&apos;s read every time a practice is generated
-          for {group.name}, so you can correct it yourself without asking a developer to change code.
+          Tell it one thing to fix or remember, hit train, and it&apos;s absorbed — applied to every practice
+          generated for {group.name} from now on. No need to keep it visible; it&apos;s just working in the
+          background after this.
         </p>
-        {saved === "preferences" && (
+        {saved === "preferences" ? (
           <p className="text-sm text-green-800 bg-green-100 border border-green-300 rounded-lg px-3 py-2 mb-3">
-            ✓ Saved — the next practice generated for {group.name} will follow these instructions.
+            ✓ Got it.
           </p>
-        )}
-        <form action={updatePreferencesAction} className="flex flex-col gap-2">
+        ) : null}
+        <form action={addPreferenceAction} className="flex gap-2">
           <input type="hidden" name="groupId" value={group.id} />
-          <textarea
-            name="preferences"
-            rows={4}
-            placeholder={`e.g. "Backstroke and breaststroke each have their own drills — never reuse a backstroke drill in a breaststroke set." Or "Main sets should be harder — match the volume in my Thursday - Sprints example, not a token handful of reps."`}
-            defaultValue={group.preferences ?? ""}
-            className="border border-indigo-200 bg-white rounded px-3 py-2 text-sm w-full"
+          <input
+            name="instruction"
+            placeholder={`e.g. "never use backstroke drills in a breaststroke set"`}
+            className="flex-1 border border-indigo-200 bg-white rounded px-3 py-2 text-sm"
           />
           <SubmitButton
-            pendingText="Saving…"
-            className="self-start bg-indigo-700 text-white text-sm font-medium rounded-full px-4 py-1.5 hover:bg-indigo-800 transition-colors"
+            pendingText="Training…"
+            className="bg-indigo-700 text-white text-sm font-medium rounded-full px-4 py-1.5 hover:bg-indigo-800 transition-colors whitespace-nowrap"
           >
-            Save instructions
+            Train it
           </SubmitButton>
         </form>
+        {group.preferences && (
+          <details className="mt-3">
+            <summary className="text-xs text-indigo-700 hover:text-indigo-900 cursor-pointer w-fit">
+              What has it learned so far?
+            </summary>
+            <pre className="text-xs text-slate-600 whitespace-pre-wrap bg-white/70 border border-indigo-100 rounded p-2 mt-2">
+              {group.preferences}
+            </pre>
+            <form action={clearPreferencesAction} className="mt-1">
+              <input type="hidden" name="groupId" value={group.id} />
+              <button type="submit" className="text-xs text-red-600 hover:text-red-800 underline">
+                Clear all instructions
+              </button>
+            </form>
+          </details>
+        )}
       </section>
 
       <section className="rounded-xl border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-5">
