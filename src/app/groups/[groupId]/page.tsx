@@ -246,6 +246,16 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
               defaultValue="aerobic base"
             />
           </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-500">
+              Anything specific just for today? <span className="text-slate-400">(optional, one-time)</span>
+            </label>
+            <input
+              name="todayNote"
+              placeholder={`e.g. "incorporate underwater dolphin kicks"`}
+              className="border border-slate-300 rounded px-3 py-1.5 text-sm w-80"
+            />
+          </div>
           <SubmitButton
             pendingText="Generating…"
             className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors"

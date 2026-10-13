@@ -158,6 +158,10 @@ export async function generatePracticeAction(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "");
   const focus = String(formData.get("focus") ?? "aerobic base").trim();
   const dateStr = String(formData.get("date") ?? "");
+  // One-time note for just this practice — never saved to the group, so
+  // there's nothing to remember to delete afterward (unlike the standing
+  // "Train the generator" instructions).
+  const todayNote = String(formData.get("todayNote") ?? "").trim() || undefined;
   if (!groupId) return;
 
   const group = await prisma.group.findUniqueOrThrow({
@@ -169,7 +173,7 @@ export async function generatePracticeAction(formData: FormData) {
     },
   });
 
-  const practice = await generatePractice(group, focus);
+  const practice = await generatePractice(group, focus, todayNote);
   const resolved = resolvePractice(group, practice);
 
   const saved = await prisma.practice.create({

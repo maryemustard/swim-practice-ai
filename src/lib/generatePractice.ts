@@ -121,7 +121,11 @@ Cooldown: 200 easy`;
 }
 
 // --- Claude-generated practice, matching the group's own style examples ---
-async function claudePractice(group: GroupForGeneration, focus: string): Promise<GeneratedPractice | null> {
+async function claudePractice(
+  group: GroupForGeneration,
+  focus: string,
+  todayNote?: string
+): Promise<GeneratedPractice | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
 
@@ -139,6 +143,11 @@ IMPORTANT — drills are specific to the stroke they're normally done in (e.g. "
 GROUP: ${group.name}${group.ageRange ? ` (ages ${group.ageRange})` : ""}
 TARGET STANDARD: ${group.targetStandard ?? "not specified"}
 TODAY'S FOCUS: ${focus}
+${
+  todayNote?.trim()
+    ? `\nSOMETHING SPECIFIC FOR TODAY ONLY (this is a one-time request for this single practice, NOT a standing rule — do not treat it as something to keep doing on future days): ${todayNote.trim()}\n`
+    : ""
+}
 
 PAST PRACTICES FROM THIS COACH (match this style exactly):
 ${styleText || "(none provided yet — write a reasonable generic practice for this focus)"}
@@ -211,9 +220,10 @@ INTERVALS_JSON:
 
 export async function generatePractice(
   group: GroupForGeneration,
-  focus: string
+  focus: string,
+  todayNote?: string
 ): Promise<GeneratedPractice> {
-  const claudeResult = await claudePractice(group, focus).catch((err) => {
+  const claudeResult = await claudePractice(group, focus, todayNote).catch((err) => {
     console.error("[generatePractice] Claude call failed, falling back to template:", err);
     return null;
   });
