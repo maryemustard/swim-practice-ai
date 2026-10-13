@@ -99,6 +99,27 @@ function estimateTargetMinutes(styleExamples: { content: string }[]): number | n
   return Math.round(totals.reduce((a, b) => a + b, 0) / totals.length);
 }
 
+/**
+ * Claude's cumulative-minute arithmetic across a long practice is only
+ * approximate — it lands close to a target total, not exactly on it. Force
+ * the LAST parenthetical number in the text to the real deterministic total
+ * so "ends at (90)" is guaranteed every time, not just usually.
+ */
+function enforceFinalTotal(text: string, finalTotal: number | null): string {
+  if (finalTotal === null) return text;
+  const trimmed = text.trimEnd();
+  // Only touch a number that's truly at the very end — the coach's own
+  // examples often leave the cooldown line with no number at all (e.g.
+  // "...(86)\n100 SD"), and overwriting an earlier mid-practice number in
+  // that case would misreport when the MAIN SET ends, not just the cooldown.
+  const endMatch = trimmed.match(/\((\d{1,3})\)\s*$/);
+  if (endMatch) {
+    const start = trimmed.length - endMatch[0].length;
+    return `${trimmed.slice(0, start)}(${finalTotal})`;
+  }
+  return `${trimmed} (${finalTotal})`;
+}
+
 // --- Deterministic fallback used when no ANTHROPIC_API_KEY is configured ---
 function templatePractice(focus: string): GeneratedPractice {
   const focusKey = focus.toLowerCase();
@@ -209,19 +230,22 @@ INTERVALS_JSON:
     return null;
   }
 
+  const finalTotal = targetMinutes ? targetMinutes + COOLDOWN_MINUTES : null;
+  const practiceText = enforceFinalTotal(practiceMatch[1].trim(), finalTotal);
+
   // The JSON block may come back wrapped in a ```json fence despite instructions not to.
   const jsonMatch = text.match(/INTERVALS_JSON:\s*(?:```(?:json)?\s*)?(\[[\s\S]*\])\s*(?:```)?\s*$/);
   if (!jsonMatch) {
     console.warn("[generatePractice] no INTERVALS_JSON found, using practice text with no pace sets:\n", text);
-    return { focus, text: practiceMatch[1].trim(), paceSets: [], source: "claude" };
+    return { focus, text: practiceText, paceSets: [], source: "claude" };
   }
 
   try {
     const paceSets = JSON.parse(jsonMatch[1]) as PaceSetSpec[];
-    return { focus, text: practiceMatch[1].trim(), paceSets, source: "claude" };
+    return { focus, text: practiceText, paceSets, source: "claude" };
   } catch (err) {
     console.error("[generatePractice] failed to parse INTERVALS_JSON:", err, "\nraw:", jsonMatch[1]);
-    return { focus, text: practiceMatch[1].trim(), paceSets: [], source: "claude" };
+    return { focus, text: practiceText, paceSets: [], source: "claude" };
   }
 }
 
