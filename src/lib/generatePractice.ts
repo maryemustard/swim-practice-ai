@@ -224,8 +224,8 @@ function inlineSummary(groupSets: Partial<Record<IntervalGroup, GroupSetResult>>
   const parts = (["A", "B"] as const)
     .filter((g) => groupSets[g])
     .map((g) => {
-      const { reps, distance, interval, totalSeconds } = groupSets[g]!;
-      return `${g}: ${reps}x${distance} on ${formatSeconds(interval)} (~${formatSeconds(totalSeconds)} total)`;
+      const { reps, distance, interval } = groupSets[g]!;
+      return `${g}: ${reps}x${distance} on ${formatSeconds(interval)}`;
     });
   return parts.length > 0 ? `(${parts.join(" · ")})` : "(no times on file)";
 }
