@@ -5,6 +5,7 @@ import { formatRaceTime } from "@/lib/time";
 import { formatDate, formatDateTime } from "@/lib/formatDate";
 import { addPreferenceAction, clearPreferencesAction, generatePracticeAction, removePreferenceAction } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { yardsForSwimmer, type ResolvedPaceSet } from "@/lib/generatePractice";
 
 export default async function GroupPage({ params, searchParams }: PageProps<"/groups/[groupId]">) {
   const { groupId } = await params;
@@ -24,6 +25,25 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
   if (!group) notFound();
 
   const goalMeet = group.goalMeets[0];
+
+  // All practices with attendance taken, for the attendance %/yardage summary
+  // below — separate from the 5-most-recent list above, which is just a log.
+  const attendedPractices = await prisma.practice.findMany({
+    where: { groupId, attendance: { some: {} } },
+    include: { attendance: true },
+  });
+  const attendanceSummary = group.swimmers.map((s) => {
+    const records = attendedPractices.flatMap((p) => p.attendance.filter((a) => a.swimmerId === s.id));
+    const presentCount = records.filter((a) => a.present).length;
+    const pct = records.length > 0 ? Math.round((presentCount / records.length) * 100) : null;
+    const yards = attendedPractices
+      .filter((p) => p.attendance.find((a) => a.swimmerId === s.id)?.present)
+      .reduce((sum, p) => {
+        const paceSets: ResolvedPaceSet[] = p.intervals ? JSON.parse(p.intervals) : [];
+        return sum + yardsForSwimmer(paceSets, s.id);
+      }, 0);
+    return { id: s.id, name: s.name, pct, practicesRecorded: records.length, yards };
+  });
 
   return (
     <div className="flex flex-col gap-8">
@@ -115,6 +135,47 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-medium">Attendance & yardage</h2>
+          <span className="text-xs text-slate-500">
+            {attendedPractices.length} practice{attendedPractices.length === 1 ? "" : "s"} with attendance taken
+          </span>
+        </div>
+        <p className="text-xs text-slate-500 mb-3">
+          Mark attendance from a practice&apos;s own page — this just rolls it up. Yardage only counts
+          personalized main sets, computed from each swimmer&apos;s own A/B pace group.
+        </p>
+        {attendedPractices.length === 0 ? (
+          <p className="text-slate-500 text-sm">
+            No attendance taken yet — open a practice below and mark who was there.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-slate-500 border-b border-slate-200">
+                  <th className="py-1.5 pr-4">Swimmer</th>
+                  <th className="py-1.5 pr-4">Attendance</th>
+                  <th className="py-1.5 pr-4">Total yards</th>
+                </tr>
+              </thead>
+              <tbody>
+                {attendanceSummary.map((s) => (
+                  <tr key={s.id} className="border-b border-slate-100 last:border-0">
+                    <td className="py-1.5 pr-4 font-medium">{s.name}</td>
+                    <td className="py-1.5 pr-4 text-slate-600">
+                      {s.pct === null ? "—" : `${s.pct}% (${s.practicesRecorded} recorded)`}
+                    </td>
+                    <td className="py-1.5 pr-4 text-slate-600">{s.yards.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5">

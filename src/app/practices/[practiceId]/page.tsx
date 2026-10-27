@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { formatSeconds } from "@/lib/paceEngine";
 import { formatDateTime } from "@/lib/formatDate";
 import type { ResolvedPaceSet } from "@/lib/generatePractice";
-import { deletePracticeAction } from "../actions";
+import { deletePracticeAction, saveAttendanceAction } from "../actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function PracticeDetailPage({
   params,
@@ -13,11 +14,15 @@ export default async function PracticeDetailPage({
 
   const practice = await prisma.practice.findUnique({
     where: { id: practiceId },
-    include: { group: true },
+    include: {
+      group: { include: { swimmers: { orderBy: { name: "asc" } } } },
+      attendance: true,
+    },
   });
   if (!practice) notFound();
 
   const paceSets: ResolvedPaceSet[] = practice.intervals ? JSON.parse(practice.intervals) : [];
+  const attendanceBySwimmer = new Map(practice.attendance.map((a) => [a.swimmerId, a.present]));
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,6 +50,38 @@ export default async function PracticeDetailPage({
 
       <section className="rounded-lg border border-slate-200 bg-white p-5">
         <pre className="text-sm whitespace-pre-wrap font-mono text-slate-800">{practice.content}</pre>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5">
+        <h2 className="font-medium text-slate-700 mb-1">Attendance</h2>
+        <p className="text-xs text-slate-500 mb-3">
+          Everyone defaults to present — just check off who wasn&apos;t here, then save.
+        </p>
+        {practice.group.swimmers.length === 0 ? (
+          <p className="text-sm text-slate-500">No swimmers on this group&apos;s roster yet.</p>
+        ) : (
+          <form action={saveAttendanceAction} className="flex flex-col gap-3">
+            <input type="hidden" name="practiceId" value={practice.id} />
+            <input type="hidden" name="groupId" value={practice.groupId} />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+              {practice.group.swimmers.map((s) => {
+                const present = attendanceBySwimmer.get(s.id) ?? true;
+                return (
+                  <label key={s.id} className="flex items-center gap-2 text-sm text-slate-700">
+                    <input type="checkbox" name="absent" value={s.id} defaultChecked={!present} />
+                    {s.name}
+                  </label>
+                );
+              })}
+            </div>
+            <SubmitButton
+              pendingText="Saving…"
+              className="self-start bg-slate-800 text-white text-sm rounded-full px-4 py-1.5 hover:bg-slate-900 transition-colors"
+            >
+              Save attendance
+            </SubmitButton>
+          </form>
+        )}
       </section>
 
       {paceSets.length > 0 && (

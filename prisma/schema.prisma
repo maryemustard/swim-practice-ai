@@ -19,9 +19,9 @@ model Team {
 }
 
 model Group {
-  id             String @id @default(cuid())
+  id             String  @id @default(cuid())
   teamId         String
-  team           Team   @relation(fields: [teamId], references: [id])
+  team           Team    @relation(fields: [teamId], references: [id])
   name           String
   ageRange       String?
   targetStandard String? // e.g. "100 free pacing on 1:20 by March"
@@ -53,12 +53,13 @@ model TeamEvent {
 }
 
 model Swimmer {
-  id      String  @id @default(cuid())
-  groupId String
-  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  name    String
-  gender  String? // "F" | "M" | "Other" — coach's own roster categories, not enforced
-  times   SwimTime[]
+  id         String       @id @default(cuid())
+  groupId    String
+  group      Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name       String
+  gender     String? // "F" | "M" | "Other" — coach's own roster categories, not enforced
+  times      SwimTime[]
+  attendance Attendance[]
 
   createdAt DateTime @default(now())
 }
@@ -103,13 +104,29 @@ model DrillEntry {
 }
 
 model Practice {
-  id        String   @id @default(cuid())
-  groupId   String
-  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  focus     String?
-  content   String // full generated practice, markdown
-  intervals String? // JSON: per-swimmer A/B/C intervals per set
-  source    String   @default("template") // "template" | "claude" | "manual"
-  date      DateTime @default(now()) // the calendar day this practice is FOR — may be scheduled ahead
-  createdAt DateTime @default(now()) // when it was actually generated/entered
+  id         String       @id @default(cuid())
+  groupId    String
+  group      Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  focus      String?
+  content    String // full generated practice, markdown
+  intervals  String? // JSON: per-swimmer A/B/C intervals per set
+  source     String       @default("template") // "template" | "claude" | "manual"
+  date       DateTime     @default(now()) // the calendar day this practice is FOR — may be scheduled ahead
+  createdAt  DateTime     @default(now()) // when it was actually generated/entered
+  attendance Attendance[]
+}
+
+// One row per swimmer per practice, written when the coach saves attendance
+// for that day — defaults to present; the coach only has to touch who wasn't
+// there. No row yet just means attendance hasn't been taken for that practice.
+model Attendance {
+  id         String   @id @default(cuid())
+  practiceId String
+  practice   Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  swimmerId  String
+  swimmer    Swimmer  @relation(fields: [swimmerId], references: [id], onDelete: Cascade)
+  present    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@unique([practiceId, swimmerId])
 }

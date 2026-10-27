@@ -1,0 +1,24 @@
+{
+  "student": "Mary Mustard",
+  "student_id": "mary-mustard",
+  "project": "Wavelength - swim team management app",
+  "repo": "maryemustard/swim-practice-ai",
+  "slack_channel": "26f-5000-jw-wavelength",
+  "current_sprint": "sprint-3",
+  "sprint_dates": "2026-10-15 to 2026-10-29",
+  "partner": null,
+  "paths": {
+    "ai_briefs": "journal/mary-mustard/sprint-3/",
+    "journal": "journal/mary-mustard/sprint-3/reflection.md"
+  },
+  "source_links": {
+    "kickoff_brief": "https://github.com/maryemustard/swim-practice-ai/blob/cf16898e4d4f7d8fe9eaaffcc414f2ea7d547ed1/journal/mary-mustard/sprint-3/ai-brief-2026-10-15T174800Z.md",
+    "kickoff_conversation": "https://github.com/maryemustard/swim-practice-ai/blob/0c5d60c6894cce853a5d2d6697d6c26c78931b9d/journal/mary-mustard/sprint-3/conversation-2026-10-15T184208Z.md",
+    "journal": "https://github.com/maryemustard/swim-practice-ai/blob/dca8c6557ecbe48b13bf452a81239583577edf13/journal/mary-mustard/sprint-3/reflection.md"
+  },
+  "next_action": "kickoff complete (all 6 questions answered); help choose 1-3 priorities, then move to daily-capture mode after Tue/Thu class",
+  "known_access_gaps": [
+    "no direct ABSC coach conversations recorded yet (other than Jonathan)",
+    "no eLC access"
+  ]
+}

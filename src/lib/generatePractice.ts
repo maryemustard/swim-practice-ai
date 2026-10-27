@@ -60,6 +60,18 @@ export type ResolvedPractice = {
   source: "template" | "claude";
 };
 
+/** Yards a given swimmer actually swam across a practice's personalized pace sets. */
+export function yardsForSwimmer(paceSets: ResolvedPaceSet[], swimmerId: string): number {
+  let total = 0;
+  for (const set of paceSets) {
+    const iv = set.intervals.find((x) => x.swimmerId === swimmerId);
+    if (!iv) continue;
+    const groupSet = set.groupSets[iv.group];
+    if (groupSet) total += groupSet.reps * groupSet.distance;
+  }
+  return total;
+}
+
 // --- Reference event used to compute pace, in priority order ---
 const REFERENCE_EVENTS: { event: string; distance: number }[] = [
   { event: "100 Free", distance: 100 },
