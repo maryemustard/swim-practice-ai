@@ -15,6 +15,19 @@ export async function deletePracticeAction(formData: FormData) {
   redirect("/practices");
 }
 
+export async function setPracticeTimeAction(formData: FormData) {
+  const practiceId = String(formData.get("practiceId") ?? "");
+  const timeOfDay = String(formData.get("timeOfDay") ?? "").trim() || null;
+  if (!practiceId) return;
+
+  const practice = await prisma.practice.update({ where: { id: practiceId }, data: { timeOfDay } });
+
+  revalidatePath(`/practices/${practiceId}`);
+  revalidatePath(`/groups/${practice.groupId}`);
+  revalidatePath(`/groups/${practice.groupId}/calendar`);
+  revalidatePath("/practices");
+}
+
 // Everyone on the roster defaults present (checkbox checked); the coach only
 // has to uncheck who was absent. One row per swimmer per practice, written/
 // overwritten here.

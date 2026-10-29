@@ -158,6 +158,7 @@ export async function generatePracticeAction(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "");
   const focus = String(formData.get("focus") ?? "aerobic base").trim();
   const dateStr = String(formData.get("date") ?? "");
+  const timeOfDay = String(formData.get("timeOfDay") ?? "").trim() || null;
   // One-time note for just this practice — never saved to the group, so
   // there's nothing to remember to delete afterward (unlike the standing
   // "Train the generator" instructions).
@@ -183,6 +184,7 @@ export async function generatePracticeAction(formData: FormData) {
       source: resolved.source,
       content: resolved.text,
       intervals: JSON.stringify(resolved.paceSets),
+      timeOfDay,
       ...(dateStr ? { date: parseLocalDate(dateStr) } : {}),
     },
   });
@@ -196,6 +198,7 @@ export async function generatePracticeAction(formData: FormData) {
 export async function addManualPracticeAction(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "");
   const dateStr = String(formData.get("date") ?? "");
+  const timeOfDay = String(formData.get("timeOfDay") ?? "").trim() || null;
   const focus = String(formData.get("focus") ?? "").trim() || null;
   const content = String(formData.get("content") ?? "").trim();
   if (!groupId || !dateStr || !content) return;
@@ -206,6 +209,7 @@ export async function addManualPracticeAction(formData: FormData) {
       focus,
       source: "manual",
       content,
+      timeOfDay,
       date: parseLocalDate(dateStr),
     },
   });

@@ -52,6 +52,7 @@ export default async function CalendarDayPage({
               href={`/practices/${p.id}`}
               className="text-sm border border-slate-200 bg-white rounded-lg px-3 py-2 hover:border-teal-300 transition-colors"
             >
+              {p.timeOfDay ? `${p.timeOfDay} — ` : ""}
               {p.focus ?? "(no focus set)"} — <span className="text-slate-500">{p.source}</span>
             </Link>
           ))}
@@ -82,6 +83,16 @@ export default async function CalendarDayPage({
               className="border border-slate-300 rounded px-3 py-1.5 text-sm w-80"
             />
           </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-500">
+              Time <span className="text-slate-400">(optional)</span>
+            </label>
+            <input
+              name="timeOfDay"
+              placeholder="e.g. 6:00 AM"
+              className="border border-slate-300 rounded px-3 py-1.5 text-sm w-28"
+            />
+          </div>
           <SubmitButton
             pendingText="Generating…"
             className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors"
@@ -105,11 +116,18 @@ export default async function CalendarDayPage({
         <form action={addManualPracticeAction} className="flex flex-col gap-3">
           <input type="hidden" name="groupId" value={groupId} />
           <input type="hidden" name="date" value={date} />
-          <input
-            name="focus"
-            placeholder="Focus (optional) — e.g. threshold"
-            className="border border-slate-300 rounded px-3 py-1.5 text-sm"
-          />
+          <div className="flex gap-3">
+            <input
+              name="focus"
+              placeholder="Focus (optional) — e.g. threshold"
+              className="border border-slate-300 rounded px-3 py-1.5 text-sm flex-1"
+            />
+            <input
+              name="timeOfDay"
+              placeholder="Time (optional) — e.g. 6:00 AM"
+              className="border border-slate-300 rounded px-3 py-1.5 text-sm w-44"
+            />
+          </div>
           <textarea
             name="content"
             required

@@ -33,6 +33,7 @@ export default async function PracticesLogPage() {
                 <td className="py-2 px-4">
                   <Link href={`/practices/${p.id}`} className="block">
                     {formatDateTime(p.createdAt)}
+                    {p.timeOfDay ? ` · ${p.timeOfDay}` : ""}
                   </Link>
                 </td>
                 <td className="py-2 px-4">{p.group.name}</td>

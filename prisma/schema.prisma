@@ -112,6 +112,10 @@ model Practice {
   intervals  String? // JSON: per-swimmer A/B/C intervals per set
   source     String       @default("template") // "template" | "claude" | "manual"
   date       DateTime     @default(now()) // the calendar day this practice is FOR — may be scheduled ahead
+  // Free text, not a strict time type — coaches write "6:00 AM", "4:30pm",
+  // "morning", whatever matches how they'd actually say it. Useful for clubs
+  // running more than one session a day for the same group.
+  timeOfDay  String?
   createdAt  DateTime     @default(now()) // when it was actually generated/entered
   attendance Attendance[]
 }

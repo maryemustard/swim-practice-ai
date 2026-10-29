@@ -317,6 +317,16 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
               className="border border-slate-300 rounded px-3 py-1.5 text-sm w-80"
             />
           </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-500">
+              Time <span className="text-slate-400">(optional)</span>
+            </label>
+            <input
+              name="timeOfDay"
+              placeholder="e.g. 6:00 AM"
+              className="border border-slate-300 rounded px-3 py-1.5 text-sm w-28"
+            />
+          </div>
           <SubmitButton
             pendingText="Generating…"
             className="bg-teal-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-teal-700 transition-colors"
@@ -345,7 +355,8 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
               href={`/practices/${p.id}`}
               className="text-sm border border-slate-200 bg-white rounded px-3 py-2 hover:border-slate-400"
             >
-              {formatDateTime(p.createdAt)} — {p.focus} ({p.source})
+              {formatDateTime(p.createdAt)}
+              {p.timeOfDay ? ` · ${p.timeOfDay}` : ""} — {p.focus} ({p.source})
             </Link>
           ))}
           {group.practices.length === 0 && (
