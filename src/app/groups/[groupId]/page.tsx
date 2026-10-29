@@ -140,9 +140,14 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
       <section className="rounded-lg border border-slate-200 bg-white p-5">
         <div className="flex items-center justify-between mb-1">
           <h2 className="font-medium">Attendance & yardage</h2>
-          <span className="text-xs text-slate-500">
-            {attendedPractices.length} practice{attendedPractices.length === 1 ? "" : "s"} with attendance taken
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500">
+              {attendedPractices.length} practice{attendedPractices.length === 1 ? "" : "s"} with attendance taken
+            </span>
+            <Link href={`/groups/${group.id}/attendance`} className="text-xs text-teal-700 hover:text-teal-900 whitespace-nowrap">
+              View full attendance →
+            </Link>
+          </div>
         </div>
         <p className="text-xs text-slate-500 mb-3">
           Mark attendance from a practice&apos;s own page — this just rolls it up. Yardage only counts
