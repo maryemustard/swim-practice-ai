@@ -55,7 +55,7 @@ export default async function PracticeDetailPage({
       <section className="rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="font-medium text-slate-700 mb-1">Attendance</h2>
         <p className="text-xs text-slate-500 mb-3">
-          Everyone defaults to present — just check off who wasn&apos;t here, then save.
+          Everyone defaults to present (checked) — just uncheck who wasn&apos;t here, then save.
         </p>
         {practice.group.swimmers.length === 0 ? (
           <p className="text-sm text-slate-500">No swimmers on this group&apos;s roster yet.</p>
@@ -68,8 +68,9 @@ export default async function PracticeDetailPage({
                 const present = attendanceBySwimmer.get(s.id) ?? true;
                 return (
                   <label key={s.id} className="flex items-center gap-2 text-sm text-slate-700">
-                    <input type="checkbox" name="absent" value={s.id} defaultChecked={!present} />
+                    <input type="checkbox" name="present" value={s.id} defaultChecked={present} />
                     {s.name}
+                    <span className="text-xs text-slate-400">(present)</span>
                   </label>
                 );
               })}

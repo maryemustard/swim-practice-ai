@@ -15,22 +15,23 @@ export async function deletePracticeAction(formData: FormData) {
   redirect("/practices");
 }
 
-// Everyone on the roster defaults present; the coach only has to check off
-// who was absent. One row per swimmer per practice, written/overwritten here.
+// Everyone on the roster defaults present (checkbox checked); the coach only
+// has to uncheck who was absent. One row per swimmer per practice, written/
+// overwritten here.
 export async function saveAttendanceAction(formData: FormData) {
   const practiceId = String(formData.get("practiceId") ?? "");
   const groupId = String(formData.get("groupId") ?? "");
   if (!practiceId || !groupId) return;
 
   const swimmers = await prisma.swimmer.findMany({ where: { groupId }, select: { id: true } });
-  const absentIds = new Set(formData.getAll("absent").map(String));
+  const presentIds = new Set(formData.getAll("present").map(String));
 
   await prisma.$transaction(
     swimmers.map((s) =>
       prisma.attendance.upsert({
         where: { practiceId_swimmerId: { practiceId, swimmerId: s.id } },
-        update: { present: !absentIds.has(s.id) },
-        create: { practiceId, swimmerId: s.id, present: !absentIds.has(s.id) },
+        update: { present: presentIds.has(s.id) },
+        create: { practiceId, swimmerId: s.id, present: presentIds.has(s.id) },
       })
     )
   );
