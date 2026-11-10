@@ -11,11 +11,12 @@ datasource db {
 }
 
 model Team {
-  id        String      @id @default(cuid())
+  id        String       @id @default(cuid())
   name      String
   groups    Group[]
   events    TeamEvent[]
-  createdAt DateTime    @default(now())
+  drills    DrillEntry[]
+  createdAt DateTime     @default(now())
 }
 
 model Group {
@@ -94,10 +95,15 @@ model GoalMeet {
   createdAt       DateTime @default(now())
 }
 
+// A drill with no groupId is team-wide — the shared standard every group
+// sees. A groupId means it's that group's own addition/exception on top of
+// the team-wide list, not a replacement for it.
 model DrillEntry {
   id         String   @id @default(cuid())
-  groupId    String
-  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  teamId     String
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  groupId    String?
+  group      Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
   name       String
   definition String
   createdAt  DateTime @default(now())

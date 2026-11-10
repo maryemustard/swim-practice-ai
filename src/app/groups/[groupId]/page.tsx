@@ -24,6 +24,11 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
 
   if (!group) notFound();
 
+  const teamDrills = await prisma.drillEntry.findMany({
+    where: { teamId: group.teamId, groupId: null },
+    orderBy: { name: "asc" },
+  });
+
   const goalMeet = group.goalMeets[0];
 
   // All practices with attendance taken, for the attendance %/yardage summary
@@ -214,14 +219,49 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5">
-        <h2 className="font-medium mb-3">Drill glossary</h2>
-        <div className="flex flex-col gap-2 text-sm">
-          {group.drills.map((d) => (
-            <p key={d.id}>
-              <span className="font-medium">{d.name}:</span> <span className="text-slate-600">{d.definition}</span>
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-medium">Drill glossary</h2>
+          <Link href="/drills" className="text-xs text-teal-700 hover:text-teal-900 whitespace-nowrap">
+            Manage team-wide drills →
+          </Link>
+        </div>
+        <p className="text-xs text-slate-500 mb-3">
+          Team-wide drills apply to every group; {group.name} can also add its own on the Upload page.
+        </p>
+        <div className="flex flex-col gap-3 text-sm">
+          {teamDrills.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Team-wide</p>
+              <div className="flex flex-col gap-1.5">
+                {teamDrills.map((d) => (
+                  <p key={d.id}>
+                    <span className="font-medium">{d.name}:</span> <span className="text-slate-600">{d.definition}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+          {group.drills.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">{group.name} only</p>
+              <div className="flex flex-col gap-1.5">
+                {group.drills.map((d) => (
+                  <p key={d.id}>
+                    <span className="font-medium">{d.name}:</span> <span className="text-slate-600">{d.definition}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+          {teamDrills.length === 0 && group.drills.length === 0 && (
+            <p className="text-slate-500">
+              No drills defined yet.{" "}
+              <Link href="/drills" className="text-teal-700 hover:text-teal-900 underline">
+                Add the first team-wide one
+              </Link>
+              .
             </p>
-          ))}
-          {group.drills.length === 0 && <p className="text-slate-500">No drills defined yet.</p>}
+          )}
         </div>
       </section>
 

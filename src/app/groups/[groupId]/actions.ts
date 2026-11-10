@@ -143,13 +143,16 @@ export async function removePreferenceAction(formData: FormData) {
   redirect(`/groups/${groupId}#train`);
 }
 
+// Group-scoped: this group's own addition/exception on top of the
+// team-wide drill glossary (managed at /drills), not a replacement for it.
 export async function addDrillAction(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const definition = String(formData.get("definition") ?? "").trim();
   if (!groupId || !name || !definition) return;
 
-  await prisma.drillEntry.create({ data: { groupId, name, definition } });
+  const group = await prisma.group.findUniqueOrThrow({ where: { id: groupId }, select: { teamId: true } });
+  await prisma.drillEntry.create({ data: { groupId, teamId: group.teamId, name, definition } });
   revalidatePath(`/groups/${groupId}`);
   revalidatePath(`/groups/${groupId}/upload`);
 }
@@ -174,8 +177,13 @@ export async function generatePracticeAction(formData: FormData) {
     },
   });
 
-  const practice = await generatePractice(group, focus, todayNote);
-  const resolved = resolvePractice(group, practice);
+  // The generator should see the team-wide standard plus this group's own
+  // additions — not just whatever's scoped to this one group.
+  const teamDrills = await prisma.drillEntry.findMany({ where: { teamId: group.teamId, groupId: null } });
+  const groupForGeneration = { ...group, drills: [...teamDrills, ...group.drills] };
+
+  const practice = await generatePractice(groupForGeneration, focus, todayNote);
+  const resolved = resolvePractice(groupForGeneration, practice);
 
   const saved = await prisma.practice.create({
     data: {

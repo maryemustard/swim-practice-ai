@@ -40,6 +40,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/calendar" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
               Team Calendar
             </Link>
+            <Link href="/drills" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
+              Drills
+            </Link>
           </nav>
           <Wave className="absolute -bottom-px left-0 w-full h-6" fill="#ecfeff" />
         </header>

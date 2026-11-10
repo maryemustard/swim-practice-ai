@@ -89,8 +89,8 @@ async function main() {
       },
       drills: {
         create: [
-          { name: "Catchup drill", definition: "One arm stays extended in front until the other arm completes its full stroke cycle and touches it." },
-          { name: "Fist drill", definition: "Swim freestyle with closed fists to emphasize forearm catch." },
+          { teamId: team.id, name: "Catchup drill", definition: "One arm stays extended in front until the other arm completes its full stroke cycle and touches it." },
+          { teamId: team.id, name: "Fist drill", definition: "Swim freestyle with closed fists to emphasize forearm catch." },
         ],
       },
     },
