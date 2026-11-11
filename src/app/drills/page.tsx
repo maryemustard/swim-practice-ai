@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { parseCues, CATEGORIES, STAGES } from "@/lib/skills";
+import { parseCues, youTubeEmbedUrl, CATEGORIES, STAGES } from "@/lib/skills";
 import { addTeamDrillAction, deleteDrillAction, addSkillAction, deleteSkillAction } from "./actions";
 
 export default async function DrillsPage({ searchParams }: PageProps<"/drills">) {
@@ -174,12 +174,14 @@ function SkillCard({
   skill: { id: string; name: string; videoUrl: string | null; cues: string };
 }) {
   const groups = parseCues(skill.cues);
+  const embedUrl = skill.videoUrl ? youTubeEmbedUrl(skill.videoUrl) : null;
+
   return (
     <div className="rounded-xl border border-line bg-ground p-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-medium text-ink text-[14.5px]">{skill.name}</h3>
         <div className="flex items-center gap-2">
-          {skill.videoUrl && (
+          {skill.videoUrl && !embedUrl && (
             <a
               href={skill.videoUrl}
               target="_blank"
@@ -197,6 +199,18 @@ function SkillCard({
           </form>
         </div>
       </div>
+      {embedUrl && (
+        <div className="aspect-video rounded-lg overflow-hidden mb-3 bg-black/80">
+          <iframe
+            src={embedUrl}
+            title={`${skill.name} clip`}
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-full h-full border-0"
+          />
+        </div>
+      )}
       <div className="flex flex-col gap-2.5">
         {groups.map((g, i) => (
           <div key={i}>

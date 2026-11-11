@@ -45,3 +45,39 @@ export function parseCues(raw: string): CueGroup[] {
 
   return groups.filter((g) => g.items.length > 0);
 }
+
+/**
+ * Coaches paste a plain YouTube link (watch/shorts/share form) — this turns
+ * it into the /embed/ form so the clip plays inline on the card instead of
+ * bouncing out to youtube.com. Returns null for anything that isn't a
+ * recognizable YouTube URL, so other hosts just fall back to a plain link.
+ */
+export function youTubeEmbedUrl(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+
+  const host = parsed.hostname.replace(/^www\.|^m\./, "");
+
+  if (host === "youtu.be") {
+    const id = parsed.pathname.slice(1);
+    return id ? `https://www.youtube.com/embed/${id}` : null;
+  }
+
+  if (host === "youtube.com") {
+    if (parsed.pathname === "/watch") {
+      const id = parsed.searchParams.get("v");
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    if (parsed.pathname.startsWith("/embed/")) return url;
+    if (parsed.pathname.startsWith("/shorts/")) {
+      const id = parsed.pathname.split("/")[2];
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+  }
+
+  return null;
+}
