@@ -1,19 +1,48 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--body-font);
+  --font-mono: var(--data-font);
+  --font-display: var(--display-font);
+
+  --color-ink: #0f2a2e;
+  --color-ink-soft: #3d5a56;
+  --color-ink-mute: #6b8884;
+
+  --color-ground: #eef8f6;
+  --color-surface: #ffffff;
+  --color-line: #d7e8e6;
+  --color-line-strong: #b9d6d3;
+
+  --color-deep: #0a3b36;
+
+  --color-pool-50: #e3f7f4;
+  --color-pool-100: #bfe9e3;
+  --color-pool-600: #0d9488;
+  --color-pool-700: #0a776d;
+  --color-pool-900: #0a3b36;
+
+  --color-amber-50: #fdf3e0;
+  --color-amber-600: #b5790c;
+  --color-amber-700: #8a5c09;
+
+  --color-coral-50: #fbe9e6;
+  --color-coral-600: #be4b3a;
+  --color-coral-700: #953a2d;
 }
 
-/* Explicitly light-themed for now — layout.tsx sets body colors via Tailwind
-   classes; no prefers-color-scheme override so cards stay readable regardless
-   of the viewer's system theme. color-scheme: light stops the browser from
-   painting a dark default canvas behind semi-transparent backgrounds. */
+/* Explicitly light-themed for now — no prefers-color-scheme override so
+   cards stay readable regardless of the viewer's system theme. color-scheme:
+   light stops the browser from painting a dark default canvas behind
+   semi-transparent backgrounds. */
 html {
   color-scheme: light;
 }
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
-  background-color: #ffffff;
+  background-color: var(--color-ground);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
 }

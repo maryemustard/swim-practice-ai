@@ -1,56 +1,63 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Wave } from "@/components/Wave";
+import { Sora, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const sora = Sora({
+  variable: "--display-font",
   subsets: ["latin"],
+  weight: ["500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexSans = IBM_Plex_Sans({
+  variable: "--body-font",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const plexMono = IBM_Plex_Mono({
+  variable: "--data-font",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
   title: "Wavelength",
-  description: "AI-generated swim practices, on the same wavelength as your coach.",
+  description: "Swim practices generated in your coaches' own voice, personalized to every swimmer's pace.",
 };
+
+const NAV_LINKS = [
+  { href: "/groups", label: "Groups" },
+  { href: "/practices", label: "Practice log" },
+  { href: "/calendar", label: "Team calendar" },
+  { href: "/drills", label: "Standard" },
+];
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${sora.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-gradient-to-b from-cyan-50 via-teal-50 to-white text-slate-900">
-        <header className="relative bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600">
-          <nav className="mx-auto max-w-5xl px-6 pt-4 pb-8 flex items-center gap-6">
-            <Link href="/" className="font-semibold text-lg tracking-tight text-white flex items-center gap-1.5">
-              <span>🌊</span> Wavelength
+      <body className="min-h-full flex flex-col bg-ground text-ink font-sans">
+        <header className="bg-deep">
+          <nav className="mx-auto max-w-5xl px-6 py-4 flex items-center gap-7">
+            <Link href="/" className="font-display font-semibold text-lg tracking-tight text-white">
+              Wavelength
             </Link>
-            <Link href="/groups" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
-              Groups
-            </Link>
-            <Link href="/practices" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
-              Practice Log
-            </Link>
-            <Link href="/calendar" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
-              Team Calendar
-            </Link>
-            <Link href="/drills" className="text-sm text-cyan-50/90 hover:text-white transition-colors">
-              Drills
-            </Link>
+            <div className="flex items-center gap-5 font-mono text-[13px]">
+              {NAV_LINKS.map((l) => (
+                <Link key={l.href} href={l.href} className="text-pool-100 hover:text-white transition-colors">
+                  {l.label}
+                </Link>
+              ))}
+            </div>
           </nav>
-          <Wave className="absolute -bottom-px left-0 w-full h-6" fill="#ecfeff" />
         </header>
-        <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-8">{children}</main>
-        <footer className="mt-auto">
-          <Wave className="w-full h-8 rotate-180" fill="#0d9488" />
-          <div className="bg-teal-700 text-teal-100 text-xs text-center py-3">
-            Made with 🐬 for coaches who&apos;d rather coach than build spreadsheets.
+        <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-9">{children}</main>
+        <footer className="border-t border-line bg-surface">
+          <div className="mx-auto max-w-5xl px-6 py-4 text-xs text-ink-mute font-mono">
+            Wavelength — practices and technique, on one standard.
           </div>
         </footer>
       </body>

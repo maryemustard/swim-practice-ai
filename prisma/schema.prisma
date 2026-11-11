@@ -16,6 +16,7 @@ model Team {
   groups    Group[]
   events    TeamEvent[]
   drills    DrillEntry[]
+  skills    Skill[]
   createdAt DateTime     @default(now())
 }
 
@@ -107,6 +108,25 @@ model DrillEntry {
   name       String
   definition String
   createdAt  DateTime @default(now())
+}
+
+// The structured drill/technique progression: organized by stroke (or
+// "general" for things that cross every stroke — dives, turns) and
+// optionally by stage (foundation/development/experienced). `cues` is typed
+// in a simple convention rather than a separate table per bullet: a line with
+// no leading "- " starts a new cue group, lines starting with "- " are that
+// group's bullets. Parsed for display by parseCues() in src/lib/skills.ts.
+model Skill {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  category  String // "general" | "freestyle" | "backstroke" | "breaststroke" | "butterfly" | "im"
+  stage     String? // "foundation" | "development" | "experienced" | null (applies to every stage)
+  name      String
+  videoUrl  String?
+  cues      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 model Practice {

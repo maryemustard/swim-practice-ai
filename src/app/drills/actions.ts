@@ -33,3 +33,25 @@ export async function deleteDrillAction(formData: FormData) {
   revalidatePath("/drills");
   if (drill.groupId) revalidatePath(`/groups/${drill.groupId}`);
 }
+
+export async function addSkillAction(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const category = String(formData.get("category") ?? "general").trim();
+  const stage = String(formData.get("stage") ?? "").trim() || null;
+  const videoUrl = String(formData.get("videoUrl") ?? "").trim() || null;
+  const cues = String(formData.get("cues") ?? "").trim();
+  if (!name || !cues) return;
+
+  const team = await theTeam();
+  await prisma.skill.create({ data: { teamId: team.id, category, stage, name, videoUrl, cues } });
+
+  revalidatePath("/drills");
+}
+
+export async function deleteSkillAction(formData: FormData) {
+  const skillId = String(formData.get("skillId") ?? "");
+  if (!skillId) return;
+
+  await prisma.skill.delete({ where: { id: skillId } });
+  revalidatePath("/drills");
+}
