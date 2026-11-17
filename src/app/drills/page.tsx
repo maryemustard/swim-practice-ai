@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { parseCues, youTubeEmbedUrl, CATEGORIES, STAGES } from "@/lib/skills";
-import { addTeamDrillAction, deleteDrillAction, addSkillAction, deleteSkillAction } from "./actions";
+import {
+  addTeamDrillAction,
+  deleteDrillAction,
+  updateDrillAction,
+  addSkillAction,
+  deleteSkillAction,
+  updateSkillAction,
+} from "./actions";
 
 export default async function DrillsPage({ searchParams }: PageProps<"/drills">) {
   const params = await searchParams;
@@ -148,17 +155,46 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
         </form>
         <div className="flex flex-col gap-2 text-sm">
           {drills.map((d) => (
-            <div key={d.id} className="flex items-start justify-between gap-3 border-b border-line last:border-0 pb-2 last:pb-0">
-              <p>
-                <span className="font-medium text-ink">{d.name}:</span>{" "}
-                <span className="text-ink-soft">{d.definition}</span>
-              </p>
-              <form action={deleteDrillAction}>
-                <input type="hidden" name="drillId" value={d.id} />
-                <button type="submit" className="text-xs text-coral-600 hover:text-coral-700 shrink-0">
-                  Remove
-                </button>
-              </form>
+            <div key={d.id} className="border-b border-line last:border-0 pb-2 last:pb-0">
+              <div className="flex items-start justify-between gap-3">
+                <p>
+                  <span className="font-medium text-ink">{d.name}:</span>{" "}
+                  <span className="text-ink-soft">{d.definition}</span>
+                </p>
+                <form action={deleteDrillAction} className="shrink-0">
+                  <input type="hidden" name="drillId" value={d.id} />
+                  <button type="submit" className="text-xs text-coral-600 hover:text-coral-700">
+                    Remove
+                  </button>
+                </form>
+              </div>
+              <details className="group/edit mt-1">
+                <summary className="text-xs text-pool-700 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+                  <span className="group-open/edit:hidden">Edit</span>
+                  <span className="hidden group-open/edit:inline">Close</span>
+                </summary>
+                <form action={updateDrillAction} className="flex flex-wrap gap-2 mt-2">
+                  <input type="hidden" name="drillId" value={d.id} />
+                  <input
+                    name="name"
+                    required
+                    defaultValue={d.name}
+                    className="border border-line rounded px-2.5 py-1.5 text-sm w-56"
+                  />
+                  <input
+                    name="definition"
+                    required
+                    defaultValue={d.definition}
+                    className="border border-line rounded px-2.5 py-1.5 text-sm flex-1"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-pool-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-pool-700 transition-colors"
+                  >
+                    Save
+                  </button>
+                </form>
+              </details>
             </div>
           ))}
           {drills.length === 0 && <p className="text-ink-mute">None yet.</p>}
@@ -171,7 +207,7 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
 function SkillCard({
   skill,
 }: {
-  skill: { id: string; name: string; videoUrl: string | null; cues: string };
+  skill: { id: string; name: string; category: string; stage: string | null; videoUrl: string | null; cues: string };
 }) {
   const groups = parseCues(skill.cues);
   const embedUrl = skill.videoUrl ? youTubeEmbedUrl(skill.videoUrl) : null;
@@ -180,7 +216,7 @@ function SkillCard({
     <div className="rounded-xl border-l-4 border-l-pool-600 border-y border-r border-line bg-surface p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-medium text-ink text-[14.5px]">{skill.name}</h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {skill.videoUrl && !embedUrl && (
             <a
               href={skill.videoUrl}
@@ -225,6 +261,57 @@ function SkillCard({
           </div>
         ))}
       </div>
+      <details className="mt-3 group/edit">
+        <summary className="text-xs text-pool-700 cursor-pointer select-none marker:content-none list-none [&::-webkit-details-marker]:hidden">
+          <span className="group-open/edit:hidden">Edit</span>
+          <span className="hidden group-open/edit:inline">Close</span>
+        </summary>
+        <form action={updateSkillAction} className="flex flex-col gap-2.5 mt-3 pt-3 border-t border-line">
+          <input type="hidden" name="skillId" value={skill.id} />
+          <div className="flex flex-wrap gap-2">
+            <input
+              name="name"
+              required
+              defaultValue={skill.name}
+              className="border border-line rounded px-2.5 py-1.5 text-sm flex-1 min-w-[140px]"
+            />
+            <select name="category" defaultValue={skill.category} className="border border-line rounded px-2.5 py-1.5 text-sm">
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <select name="stage" defaultValue={skill.stage ?? ""} className="border border-line rounded px-2.5 py-1.5 text-sm">
+              <option value="">All stages</option>
+              {STAGES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <input
+            name="videoUrl"
+            defaultValue={skill.videoUrl ?? ""}
+            placeholder="Video URL (optional)"
+            className="border border-line rounded px-2.5 py-1.5 text-sm"
+          />
+          <textarea
+            name="cues"
+            required
+            rows={5}
+            defaultValue={skill.cues}
+            className="border border-line rounded px-2.5 py-2 text-sm font-mono"
+          />
+          <button
+            type="submit"
+            className="self-start bg-pool-600 text-white text-sm rounded-full px-4 py-1.5 hover:bg-pool-700 transition-colors"
+          >
+            Save
+          </button>
+        </form>
+      </details>
     </div>
   );
 }
