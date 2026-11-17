@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { STAGES } from "@/lib/skills";
 import { deleteGroupAction, updateGroupAction } from "@/app/actions";
 
 export default async function EditGroupPage({ params }: PageProps<"/groups/[groupId]/edit">) {
@@ -37,6 +38,17 @@ export default async function EditGroupPage({ params }: PageProps<"/groups/[grou
               placeholder="e.g. 14-18"
               className="border border-slate-300 rounded px-3 py-1.5 text-sm"
             />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-500">Level</label>
+            <select name="level" defaultValue={group.level ?? ""} className="border border-slate-300 rounded px-3 py-1.5 text-sm">
+              <option value="">Not set</option>
+              {STAGES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-slate-500">Target standard</label>

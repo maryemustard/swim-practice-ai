@@ -19,6 +19,7 @@ export async function createGroupAction(formData: FormData) {
       teamId: team.id,
       name,
       ageRange: String(formData.get("ageRange") ?? "").trim() || null,
+      level: String(formData.get("level") ?? "").trim() || null,
       targetStandard: String(formData.get("targetStandard") ?? "").trim() || null,
     },
   });
@@ -37,6 +38,7 @@ export async function updateGroupAction(formData: FormData) {
     data: {
       name,
       ageRange: String(formData.get("ageRange") ?? "").trim() || null,
+      level: String(formData.get("level") ?? "").trim() || null,
       targetStandard: String(formData.get("targetStandard") ?? "").trim() || null,
     },
   });

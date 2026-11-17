@@ -54,7 +54,14 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
     <div className="flex flex-col gap-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-teal-900">{group.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-teal-900">{group.name}</h1>
+            {group.level && (
+              <span className="text-xs text-teal-700 bg-teal-50 rounded-full px-2 py-0.5 capitalize">
+                {group.level}
+              </span>
+            )}
+          </div>
           {group.ageRange && <p className="text-slate-500 text-sm">Ages {group.ageRange}</p>}
           {group.targetStandard && <p className="text-slate-700 mt-1">{group.targetStandard}</p>}
         </div>

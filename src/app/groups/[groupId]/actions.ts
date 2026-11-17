@@ -180,7 +180,13 @@ export async function generatePracticeAction(formData: FormData) {
   // The generator should see the team-wide standard plus this group's own
   // additions — not just whatever's scoped to this one group.
   const teamDrills = await prisma.drillEntry.findMany({ where: { teamId: group.teamId, groupId: null } });
-  const skills = await prisma.skill.findMany({ where: { teamId: group.teamId } });
+  const allSkills = await prisma.skill.findMany({ where: { teamId: group.teamId } });
+  // A skill with no stage applies to every group regardless of level. A
+  // staged skill only applies if it matches this group's own level — a
+  // foundation group shouldn't be taught the advanced progression, and vice
+  // versa. If the group has no level set, fall back to showing everything
+  // rather than silently showing nothing.
+  const skills = group.level ? allSkills.filter((s) => s.stage === null || s.stage === group.level) : allSkills;
   const groupForGeneration = { ...group, drills: [...teamDrills, ...group.drills], skills };
 
   const practice = await generatePractice(groupForGeneration, focus, todayNote);

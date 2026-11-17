@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { STAGES } from "@/lib/skills";
 import { createGroupAction } from "../actions";
 
 export default async function GroupsPage() {
@@ -24,13 +25,20 @@ export default async function GroupsPage() {
             href={`/groups/${g.id}`}
             className="rounded-xl border border-teal-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-teal-300 transition-all"
           >
-            <div className="flex items-baseline justify-between">
+            <div className="flex items-baseline justify-between gap-2">
               <h2 className="font-medium text-lg text-teal-900">{g.name}</h2>
-              {g.ageRange && (
-                <span className="text-xs text-orange-700 bg-orange-50 rounded-full px-2 py-0.5">
-                  ages {g.ageRange}
-                </span>
-              )}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {g.level && (
+                  <span className="text-xs text-teal-700 bg-teal-50 rounded-full px-2 py-0.5 capitalize">
+                    {g.level}
+                  </span>
+                )}
+                {g.ageRange && (
+                  <span className="text-xs text-orange-700 bg-orange-50 rounded-full px-2 py-0.5">
+                    ages {g.ageRange}
+                  </span>
+                )}
+              </div>
             </div>
             {g.targetStandard && (
               <p className="text-sm text-slate-600 mt-2">{g.targetStandard}</p>
@@ -57,6 +65,17 @@ export default async function GroupsPage() {
           <div className="flex flex-col gap-1">
             <label className="text-xs text-slate-500">Age range</label>
             <input name="ageRange" placeholder="e.g. 14-18" className="border border-slate-300 rounded px-3 py-1.5 text-sm w-28" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-500">Level</label>
+            <select name="level" defaultValue="" className="border border-slate-300 rounded px-3 py-1.5 text-sm">
+              <option value="">Not set</option>
+              {STAGES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-slate-500">Target standard</label>
