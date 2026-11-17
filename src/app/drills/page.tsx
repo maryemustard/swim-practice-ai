@@ -240,7 +240,10 @@ function SkillCard({
   const embedUrl = skill.videoUrl ? youTubeEmbedUrl(skill.videoUrl) : null;
 
   return (
-    <div className="rounded-xl border-l-4 border-l-pool-600 border-y border-r border-line bg-surface p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div
+      id={`skill-${skill.id}`}
+      className="rounded-xl border-l-4 border-l-pool-600 border-y border-r border-line bg-surface p-4 shadow-sm hover:shadow-md transition-shadow duration-200 scroll-mt-4 target:ring-2 target:ring-amber-600"
+    >
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-medium text-ink text-[14.5px]">{skill.name}</h3>
         <div className="flex items-center gap-3">

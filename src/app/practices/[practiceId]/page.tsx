@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { formatSeconds } from "@/lib/paceEngine";
 import { formatDateTime } from "@/lib/formatDate";
 import type { ResolvedPaceSet } from "@/lib/generatePractice";
+import { CATEGORIES, STAGES } from "@/lib/skills";
 import { deletePracticeAction, saveAttendanceAction, setPracticeTimeAction } from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
 
@@ -23,6 +24,14 @@ export default async function PracticeDetailPage({
 
   const paceSets: ResolvedPaceSet[] = practice.intervals ? JSON.parse(practice.intervals) : [];
   const attendanceBySwimmer = new Map(practice.attendance.map((a) => [a.swimmerId, a.present]));
+
+  // The generator is told to use the standard's exact skill names, so we can
+  // find which ones actually made it into this practice by matching their
+  // name against the written text — and link straight back to that skill's
+  // card instead of making a coach go hunt for it.
+  const teamSkills = await prisma.skill.findMany({ where: { teamId: practice.group.teamId } });
+  const contentLower = practice.content.toLowerCase();
+  const usedSkills = teamSkills.filter((s) => contentLower.includes(s.name.toLowerCase()));
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,6 +73,30 @@ export default async function PracticeDetailPage({
       <section className="rounded-lg border border-slate-200 bg-white p-5">
         <pre className="text-sm whitespace-pre-wrap font-mono text-slate-800">{practice.content}</pre>
       </section>
+
+      {usedSkills.length > 0 && (
+        <section className="rounded-lg border border-slate-200 bg-white p-5">
+          <h2 className="font-medium text-slate-700 mb-1">From the standard</h2>
+          <p className="text-xs text-slate-500 mb-3">
+            Drills in this practice that come from the team&apos;s standard — click through for the full cues.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {usedSkills.map((s) => (
+              <Link
+                key={s.id}
+                href={`/drills?category=${s.category}#skill-${s.id}`}
+                className="text-sm border border-teal-200 text-teal-700 rounded-full px-3 py-1 hover:bg-teal-50 transition-colors"
+              >
+                {s.name}
+                <span className="text-xs text-slate-400 ml-1.5">
+                  {CATEGORIES.find((c) => c.value === s.category)?.label}
+                  {s.stage ? ` · ${STAGES.find((st) => st.value === s.stage)?.label}` : ""}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="font-medium text-slate-700 mb-1">Attendance</h2>
