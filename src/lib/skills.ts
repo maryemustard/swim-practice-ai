@@ -49,15 +49,26 @@ export function parseCues(raw: string): CueGroup[] {
 /**
  * Coaches paste a plain YouTube link (watch/shorts/share form) — this turns
  * it into the /embed/ form so the clip plays inline on the card instead of
- * bouncing out to youtube.com. Returns null for anything that isn't a
- * recognizable YouTube URL, so other hosts just fall back to a plain link.
+ * bouncing out to youtube.com. Also handles a link copied from Google's
+ * inline video search results (google.com/search?...#...vid:<id>...), since
+ * that's an easy, non-obvious mistake to make when you clicked a video
+ * thumbnail straight from a Google search instead of opening YouTube
+ * itself. Returns null for anything that isn't recognizable, so other hosts
+ * just fall back to a plain link.
  */
 export function youTubeEmbedUrl(url: string): string | null {
   let parsed: URL;
   try {
     parsed = new URL(url);
   } catch {
-    return null;
+    // Coaches often paste a URL without "https://" (e.g. copied from an
+    // address bar that hides the scheme) — retry once with it added rather
+    // than silently falling back to a plain link.
+    try {
+      parsed = new URL(`https://${url}`);
+    } catch {
+      return null;
+    }
   }
 
   const host = parsed.hostname.replace(/^www\.|^m\./, "");
@@ -72,11 +83,16 @@ export function youTubeEmbedUrl(url: string): string | null {
       const id = parsed.searchParams.get("v");
       return id ? `https://www.youtube.com/embed/${id}` : null;
     }
-    if (parsed.pathname.startsWith("/embed/")) return url;
+    if (parsed.pathname.startsWith("/embed/")) return `https://www.youtube.com${parsed.pathname}${parsed.search}`;
     if (parsed.pathname.startsWith("/shorts/")) {
       const id = parsed.pathname.split("/")[2];
       return id ? `https://www.youtube.com/embed/${id}` : null;
     }
+  }
+
+  if (host === "google.com" && parsed.pathname === "/search") {
+    const match = parsed.hash.match(/vid:([a-zA-Z0-9_-]{6,})/);
+    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
   }
 
   return null;
