@@ -131,6 +131,11 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
               className="border border-line rounded px-3 py-1.5 text-sm flex-1 min-w-[160px]"
             />
           </div>
+          <input
+            name="purpose"
+            placeholder="What's this drill for? e.g. Builds a tight streamline and a hip-driven kick, not a knee-driven one"
+            className="border border-line rounded px-3 py-1.5 text-sm"
+          />
           <textarea
             name="cues"
             required
@@ -221,7 +226,15 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
 function SkillCard({
   skill,
 }: {
-  skill: { id: string; name: string; category: string; stage: string | null; videoUrl: string | null; cues: string };
+  skill: {
+    id: string;
+    name: string;
+    category: string;
+    stage: string | null;
+    videoUrl: string | null;
+    purpose: string | null;
+    cues: string;
+  };
 }) {
   const groups = parseCues(skill.cues);
   const embedUrl = skill.videoUrl ? youTubeEmbedUrl(skill.videoUrl) : null;
@@ -249,6 +262,7 @@ function SkillCard({
           </form>
         </div>
       </div>
+      {skill.purpose && <p className="text-[13px] text-ink-soft italic mb-3 leading-relaxed">{skill.purpose}</p>}
       {embedUrl && (
         <div className="aspect-video rounded-lg overflow-hidden mb-3 bg-black/80">
           <iframe
@@ -309,6 +323,12 @@ function SkillCard({
             name="videoUrl"
             defaultValue={skill.videoUrl ?? ""}
             placeholder="Video URL (optional)"
+            className="border border-line rounded px-2.5 py-1.5 text-sm"
+          />
+          <input
+            name="purpose"
+            defaultValue={skill.purpose ?? ""}
+            placeholder="What's this drill for?"
             className="border border-line rounded px-2.5 py-1.5 text-sm"
           />
           <textarea

@@ -41,7 +41,7 @@ export type GroupForGeneration = {
   preferences?: string | null;
   styleExamples: { title: string; content: string }[];
   drills: { name: string; definition: string }[];
-  skills: { name: string; category: string; stage: string | null; cues: string }[];
+  skills: { name: string; category: string; stage: string | null; purpose: string | null; cues: string }[];
   swimmers: {
     id: string;
     name: string;
@@ -174,7 +174,10 @@ async function claudePractice(
     .join("\n\n");
   const drillText = group.drills.map((d) => `- ${d.name}: ${d.definition}`).join("\n");
   const skillsText = group.skills
-    .map((s) => `## ${s.name} (${s.category}${s.stage ? `, ${s.stage}` : ""})\n${s.cues}`)
+    .map(
+      (s) =>
+        `## ${s.name} (${s.category}${s.stage ? `, ${s.stage}` : ""})${s.purpose ? `\nPoint of this drill: ${s.purpose}` : ""}\n${s.cues}`
+    )
     .join("\n\n");
   // Length only comes from something the coach actually said: a one-time
   // note for today, or a standing instruction trained in. Today's note wins
@@ -204,7 +207,7 @@ ${styleText || "(none provided yet — write a reasonable generic practice for t
 THIS COACH'S DRILL VOCABULARY:
 ${drillText || "(none provided yet)"}
 
-TEAM'S STANDARDIZED TECHNIQUE PROGRESSION (the shared standard every group teaches the same way — when this practice touches a skill listed here, teach it with this exact name and these cues, not your own invented phrasing):
+TEAM'S STANDARDIZED TECHNIQUE PROGRESSION (the shared standard every group teaches the same way — when this practice touches a skill listed here, teach it with this exact name and these cues, not your own invented phrasing. Where a "Point of this drill" is given, let it guide WHEN and WHY you reach for that drill, not just how to phrase it):
 ${skillsText || "(none provided yet)"}
 ${
   group.preferences?.trim()

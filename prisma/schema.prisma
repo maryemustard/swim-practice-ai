@@ -124,6 +124,11 @@ model Skill {
   stage     String? // "foundation" | "development" | "advanced" | null (applies to every stage)
   name      String
   videoUrl  String?
+  // Why this drill/technique matters — what it's building toward, not just
+  // the mechanics. Optional so older entries aren't broken, but the add/edit
+  // forms push for it. Also fed to the practice generator, so Claude knows
+  // the intent behind a drill, not just its cues.
+  purpose   String?
   cues      String
   order     Int      @default(0)
   createdAt DateTime @default(now())
