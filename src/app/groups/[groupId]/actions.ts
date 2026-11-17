@@ -180,7 +180,8 @@ export async function generatePracticeAction(formData: FormData) {
   // The generator should see the team-wide standard plus this group's own
   // additions — not just whatever's scoped to this one group.
   const teamDrills = await prisma.drillEntry.findMany({ where: { teamId: group.teamId, groupId: null } });
-  const groupForGeneration = { ...group, drills: [...teamDrills, ...group.drills] };
+  const skills = await prisma.skill.findMany({ where: { teamId: group.teamId } });
+  const groupForGeneration = { ...group, drills: [...teamDrills, ...group.drills], skills };
 
   const practice = await generatePractice(groupForGeneration, focus, todayNote);
   const resolved = resolvePractice(groupForGeneration, practice);

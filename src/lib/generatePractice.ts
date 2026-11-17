@@ -41,6 +41,7 @@ export type GroupForGeneration = {
   preferences?: string | null;
   styleExamples: { title: string; content: string }[];
   drills: { name: string; definition: string }[];
+  skills: { name: string; category: string; stage: string | null; cues: string }[];
   swimmers: {
     id: string;
     name: string;
@@ -172,6 +173,9 @@ async function claudePractice(
     .map((s) => `### ${s.title}\n${s.content}`)
     .join("\n\n");
   const drillText = group.drills.map((d) => `- ${d.name}: ${d.definition}`).join("\n");
+  const skillsText = group.skills
+    .map((s) => `## ${s.name} (${s.category}${s.stage ? `, ${s.stage}` : ""})\n${s.cues}`)
+    .join("\n\n");
   // Length only comes from something the coach actually said: a one-time
   // note for today, or a standing instruction trained in. Today's note wins
   // when both are present. No length is enforced otherwise.
@@ -199,6 +203,9 @@ ${styleText || "(none provided yet — write a reasonable generic practice for t
 
 THIS COACH'S DRILL VOCABULARY:
 ${drillText || "(none provided yet)"}
+
+TEAM'S STANDARDIZED TECHNIQUE PROGRESSION (the shared standard every group teaches the same way — when this practice touches a skill listed here, teach it with this exact name and these cues, not your own invented phrasing):
+${skillsText || "(none provided yet)"}
 ${
   group.preferences?.trim()
     ? `\nSTANDING INSTRUCTIONS FROM THIS COACH (they wrote these themselves to steer how you generate for this group — follow them even where they override the general guidance above):\n${group.preferences.trim()}\n`
