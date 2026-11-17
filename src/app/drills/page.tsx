@@ -14,9 +14,10 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
   const params = await searchParams;
   const category = typeof params.category === "string" ? params.category : "general";
 
-  const [skills, drills] = await Promise.all([
+  const [skills, drills, groups] = await Promise.all([
     prisma.skill.findMany({ where: { category }, orderBy: [{ stage: "asc" }, { order: "asc" }] }),
     prisma.drillEntry.findMany({ where: { groupId: null }, orderBy: { name: "asc" } }),
+    prisma.group.findMany({ select: { id: true, name: true, level: true }, orderBy: { name: "asc" } }),
   ]);
 
   const byStage = new Map<string | null, typeof skills>();
@@ -26,13 +27,24 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
     byStage.get(key)!.push(s);
   }
 
+  const groupsByLevel = new Map<string | null, typeof groups>();
+  for (const g of groups) {
+    const key = g.level;
+    if (!groupsByLevel.has(key)) groupsByLevel.set(key, []);
+    groupsByLevel.get(key)!.push(g);
+  }
+
   return (
     <div className="flex flex-col gap-7">
       <div>
         <h1 className="text-2xl font-semibold text-ink">The standard</h1>
         <p className="text-ink-soft mt-1 max-w-2xl">
           One shared progression every group&apos;s practices draw from — so a drill or technique cue means
-          the same thing whether it&apos;s taught in Dawgs 1 or Senior 1.
+          the same thing no matter which group teaches it.
+        </p>
+        <p className="text-xs text-ink-mute mt-2 font-mono">
+          Applies to all {groups.length} group{groups.length === 1 ? "" : "s"}
+          {groups.length > 0 ? `: ${groups.map((g) => g.name).join(", ")}` : ""}
         </p>
       </div>
 
@@ -77,21 +89,31 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
               </div>
             </div>
           )}
-          {STAGES.map((stage) => (
-            <div key={stage.value} className="rounded-xl border border-line bg-surface p-5 shadow-sm">
-              <h2 className="font-medium text-ink mb-3">{stage.label}</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {(byStage.get(stage.value) ?? []).map((s) => (
-                  <SkillCard key={s.id} skill={s} />
-                ))}
-                {(byStage.get(stage.value) ?? []).length === 0 && (
-                  <p className="text-ink-mute text-sm sm:col-span-2">
-                    No {CATEGORIES.find((c) => c.value === category)?.label.toLowerCase()} cues for this stage yet.
+          {STAGES.map((stage) => {
+            const groupsHere = groupsByLevel.get(stage.value) ?? [];
+            return (
+              <div key={stage.value} className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+                <div className="flex items-baseline justify-between mb-3 gap-3 flex-wrap">
+                  <h2 className="font-medium text-ink">{stage.label}</h2>
+                  <p className="text-xs text-ink-mute font-mono">
+                    {groupsHere.length > 0
+                      ? `Groups at this stage: ${groupsHere.map((g) => g.name).join(", ")}`
+                      : "No groups set to this stage yet"}
                   </p>
-                )}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {(byStage.get(stage.value) ?? []).map((s) => (
+                    <SkillCard key={s.id} skill={s} />
+                  ))}
+                  {(byStage.get(stage.value) ?? []).length === 0 && (
+                    <p className="text-ink-mute text-sm sm:col-span-2">
+                      No {CATEGORIES.find((c) => c.value === category)?.label.toLowerCase()} cues for this stage yet.
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
