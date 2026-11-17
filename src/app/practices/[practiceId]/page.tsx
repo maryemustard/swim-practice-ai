@@ -25,13 +25,16 @@ export default async function PracticeDetailPage({
   const paceSets: ResolvedPaceSet[] = practice.intervals ? JSON.parse(practice.intervals) : [];
   const attendanceBySwimmer = new Map(practice.attendance.map((a) => [a.swimmerId, a.present]));
 
-  // The generator is told to use the standard's exact skill names, so we can
-  // find which ones actually made it into this practice by matching their
-  // name against the written text — and link straight back to that skill's
-  // card instead of making a coach go hunt for it.
+  // The generator is told to use the standard's exact skill names, but it
+  // still writes its own punctuation/casing around them ("side-kick drill"
+  // for a skill named "Side Kick") -- so match on letters/numbers only,
+  // ignoring spaces, hyphens, and case, rather than a brittle exact
+  // substring check. Then link straight back to that skill's card instead
+  // of making a coach go hunt for it.
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   const teamSkills = await prisma.skill.findMany({ where: { teamId: practice.group.teamId } });
-  const contentLower = practice.content.toLowerCase();
-  const usedSkills = teamSkills.filter((s) => contentLower.includes(s.name.toLowerCase()));
+  const normalizedContent = normalize(practice.content);
+  const usedSkills = teamSkills.filter((s) => normalizedContent.includes(normalize(s.name)));
 
   return (
     <div className="flex flex-col gap-6">
