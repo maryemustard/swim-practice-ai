@@ -121,7 +121,7 @@ model Skill {
   teamId    String
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   category  String // "general" | "freestyle" | "backstroke" | "breaststroke" | "butterfly" | "im"
-  stage     String? // "foundation" | "development" | "experienced" | null (applies to every stage)
+  stage     String? // "foundation" | "development" | "advanced" | null (applies to every stage)
   name      String
   videoUrl  String?
   cues      String

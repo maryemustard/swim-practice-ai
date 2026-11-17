@@ -12,7 +12,7 @@ export const CATEGORIES = [
 export const STAGES = [
   { value: "foundation", label: "Foundation" },
   { value: "development", label: "Development" },
-  { value: "experienced", label: "Experienced" },
+  { value: "advanced", label: "Advanced" },
 ] as const;
 
 /**

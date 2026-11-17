@@ -63,6 +63,20 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
         </div>
       ) : (
         <div className="flex flex-col gap-5">
+          {(byStage.get(null) ?? []).length > 0 && (
+            <div className="rounded-xl border-l-4 border-l-amber-600 border-y border-r border-line bg-surface p-5 shadow-sm">
+              <h2 className="font-medium text-ink mb-1">All stages</h2>
+              <p className="text-xs text-ink-mute mb-3">
+                Broad drills every {CATEGORIES.find((c) => c.value === category)?.label.toLowerCase()} swimmer
+                works on, regardless of where they are in the progression.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {(byStage.get(null) ?? []).map((s) => (
+                  <SkillCard key={s.id} skill={s} />
+                ))}
+              </div>
+            </div>
+          )}
           {STAGES.map((stage) => (
             <div key={stage.value} className="rounded-xl border border-line bg-surface p-5 shadow-sm">
               <h2 className="font-medium text-ink mb-3">{stage.label}</h2>
