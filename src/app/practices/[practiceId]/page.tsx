@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatSeconds } from "@/lib/paceEngine";
@@ -7,6 +8,57 @@ import type { ResolvedPaceSet } from "@/lib/generatePractice";
 import { CATEGORIES, STAGES } from "@/lib/skills";
 import { deletePracticeAction, saveAttendanceAction, setPracticeTimeAction } from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
+
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Builds a regex for one skill name that tolerates the generator's own
+// punctuation around it -- "Side Kick" also matches "side-kick" or
+// "Side   Kick" in the written text.
+function skillNamePattern(name: string) {
+  return name.trim().split(/\s+/).map(escapeRegExp).join("[\\s-]+");
+}
+
+// Wraps every occurrence of a used skill's name inside the practice text
+// with a link to that skill's card on the standard page, so a coach reading
+// the practice can click straight from "side-kick drill" to the full cues
+// instead of having to go find it themselves.
+function linkifySkills(content: string, skills: { id: string; name: string; category: string }[]) {
+  if (skills.length === 0) return content;
+
+  // Longest name first, so a skill whose name is a substring of another
+  // skill's name doesn't steal the match.
+  const sorted = [...skills].sort((a, b) => b.name.length - a.name.length);
+  const pattern = sorted.map((s) => `(${skillNamePattern(s.name)})`).join("|");
+  const regex = new RegExp(pattern, "gi");
+
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = regex.exec(content)) !== null) {
+    if (match.index > lastIndex) nodes.push(content.slice(lastIndex, match.index));
+    const matchedText = match[0];
+    const skill = sorted.find((s) => new RegExp(`^${skillNamePattern(s.name)}$`, "i").test(matchedText));
+    nodes.push(
+      skill ? (
+        <Link
+          key={key++}
+          href={`/drills?category=${skill.category}#skill-${skill.id}`}
+          className="text-teal-700 underline decoration-dotted decoration-1 underline-offset-2 hover:text-teal-900 hover:decoration-solid"
+        >
+          {matchedText}
+        </Link>
+      ) : (
+        matchedText
+      )
+    );
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < content.length) nodes.push(content.slice(lastIndex));
+  return nodes;
+}
 
 export default async function PracticeDetailPage({
   params,
@@ -41,6 +93,7 @@ export default async function PracticeDetailPage({
   const teamSkills = level ? allTeamSkills.filter((s) => s.stage === null || s.stage === level) : allTeamSkills;
   const normalizedContent = normalize(practice.content);
   const usedSkills = teamSkills.filter((s) => normalizedContent.includes(normalize(s.name)));
+  const contentNodes = linkifySkills(practice.content, usedSkills);
 
   return (
     <div className="flex flex-col gap-6">
@@ -80,7 +133,7 @@ export default async function PracticeDetailPage({
       </div>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5">
-        <pre className="text-sm whitespace-pre-wrap font-mono text-slate-800">{practice.content}</pre>
+        <pre className="text-sm whitespace-pre-wrap font-mono text-slate-800">{contentNodes}</pre>
       </section>
 
       {usedSkills.length > 0 && (
