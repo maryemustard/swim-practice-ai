@@ -32,7 +32,13 @@ export default async function PracticeDetailPage({
   // substring check. Then link straight back to that skill's card instead
   // of making a coach go hunt for it.
   const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-  const teamSkills = await prisma.skill.findMany({ where: { teamId: practice.group.teamId } });
+  const allTeamSkills = await prisma.skill.findMany({ where: { teamId: practice.group.teamId } });
+  // Same scoping the generator itself used: a staged skill only applies if
+  // it matches this group's level, so don't link to a stage that was never
+  // actually in play for this practice (e.g. the Foundation "Side Kick" when
+  // this group is Development).
+  const level = practice.group.level;
+  const teamSkills = level ? allTeamSkills.filter((s) => s.stage === null || s.stage === level) : allTeamSkills;
   const normalizedContent = normalize(practice.content);
   const usedSkills = teamSkills.filter((s) => normalizedContent.includes(normalize(s.name)));
 
