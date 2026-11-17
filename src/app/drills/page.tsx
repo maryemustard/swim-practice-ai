@@ -36,7 +36,7 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
             href={`/drills?category=${c.value}`}
             className={
               c.value === category
-                ? "bg-pool-600 text-white px-3.5 py-1.5 rounded-full"
+                ? "bg-pool-600 text-white px-3.5 py-1.5 rounded-full shadow-sm shadow-pool-900/20"
                 : "bg-surface border border-line text-ink-mute px-3.5 py-1.5 rounded-full hover:border-pool-600 hover:text-pool-700 transition-colors"
             }
           >
@@ -57,7 +57,7 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
       ) : (
         <div className="flex flex-col gap-5">
           {STAGES.map((stage) => (
-            <div key={stage.value} className="rounded-xl border border-line bg-surface p-5">
+            <div key={stage.value} className="rounded-xl border border-line bg-surface p-5 shadow-sm">
               <h2 className="font-medium text-ink mb-3">{stage.label}</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {(byStage.get(stage.value) ?? []).map((s) => (
@@ -74,7 +74,7 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
         </div>
       )}
 
-      <section className="rounded-lg border border-line bg-surface p-5">
+      <section className="rounded-lg border border-line bg-surface p-5 shadow-sm">
         <h2 className="font-medium text-ink mb-1">Add to the standard</h2>
         <p className="text-xs text-ink-mute mb-3">
           Type cues under a label, one per line starting with &quot;- &quot;. A new line with no &quot;- &quot;
@@ -126,7 +126,7 @@ export default async function DrillsPage({ searchParams }: PageProps<"/drills">)
         </form>
       </section>
 
-      <section className="rounded-lg border border-line bg-surface p-5">
+      <section className="rounded-lg border border-line bg-surface p-5 shadow-sm">
         <div className="flex items-center justify-between mb-1">
           <h2 className="font-medium text-ink">Plain drill glossary</h2>
         </div>
@@ -177,7 +177,7 @@ function SkillCard({
   const embedUrl = skill.videoUrl ? youTubeEmbedUrl(skill.videoUrl) : null;
 
   return (
-    <div className="rounded-xl border border-line bg-ground p-4">
+    <div className="rounded-xl border-l-4 border-l-pool-600 border-y border-r border-line bg-surface p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-medium text-ink text-[14.5px]">{skill.name}</h3>
         <div className="flex items-center gap-2">

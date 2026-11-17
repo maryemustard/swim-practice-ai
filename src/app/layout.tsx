@@ -40,14 +40,25 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sora.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-ground text-ink font-sans">
-        <header className="bg-deep">
+        <div
+          className="h-[5px]"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(90deg, var(--color-pool-700) 0 44px, var(--color-amber-600) 44px 50px)",
+          }}
+        />
+        <header className="bg-deep shadow-md shadow-pool-900/20">
           <nav className="mx-auto max-w-5xl px-6 py-4 flex items-center gap-7">
             <Link href="/" className="font-display font-semibold text-lg tracking-tight text-white">
               Wavelength
             </Link>
             <div className="flex items-center gap-5 font-mono text-[13px]">
               {NAV_LINKS.map((l) => (
-                <Link key={l.href} href={l.href} className="text-pool-100 hover:text-white transition-colors">
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="text-pool-100 hover:text-white border-b border-transparent hover:border-amber-600 pb-0.5 transition-colors"
+                >
                   {l.label}
                 </Link>
               ))}
